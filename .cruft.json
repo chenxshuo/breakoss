@@ -1,0 +1,31 @@
+{
+  "template": "https://github.com/cthoyt/cookiecutter-snekpack",
+  "commit": "f7c1c7624eea40b7b62aad43dd030ba276ebb82a",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "package_name": "breakoss",
+      "package_name_stylized": "BreakOSS: Jailbreak GPT-OSS Toolkit",
+      "short_description": "A research toolkit providing a bag of techniques to jailbreak OpenAI’s open-source models.",
+      "author_name": "Shuo Chen",
+      "author_github": "chenxshuo",
+      "author_email": "chenshuo.cs@outlook.com",
+      "github_organization_name": "",
+      "github_repository_name": "breakoss",
+      "command_line_interface": true,
+      "gitlab": false,
+      "runner": "tox",
+      "__not_charlie": "true",
+      "__runner": "tox -e",
+      "__runner_uv": "--with tox-uv tox -e",
+      "__runner_pip": "tox tox-uv",
+      "__runner_install_uv": "uv tool install tox --with tox-uv",
+      "__runner_install_pip": "python3 -m pip install tox tox-uv",
+      "__runner_tests": "py",
+      "__gh_slug": "/breakoss",
+      "_template": "https://github.com/cthoyt/cookiecutter-snekpack",
+      "_commit": "f7c1c7624eea40b7b62aad43dd030ba276ebb82a"
+    }
+  },
+  "directory": null
+}
