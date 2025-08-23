@@ -54,6 +54,14 @@ dependencies = [
     "click",
     "more_click",
     "typing-extensions",
+    "pydantic>=2.11.7",
+    "pandas>=2.3.2",
+    "transformers>=4.55.4",
+    "torch==2.5.1",
+    "accelerate>=1.10.0",
+    "loguru>=0.7.3",
+    "ipdb>=0.13.13",
+    "fire>=0.7.1",
 ]
 
 # see https://peps.python.org/pep-0735/ and https://docs.astral.sh/uv/concepts/dependencies/#dependency-groups
@@ -274,3 +282,8 @@ replace = "VERSION = \"{new_version}\""
 filename = "CITATION.cff"
 search = "version: {current_version}"
 replace = "version: {new_version}"
+
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true

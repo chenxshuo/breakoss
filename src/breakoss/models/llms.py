@@ -8,6 +8,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from typing import Literal
 from loguru import logger
 
+
 class InferenceConfig(BaseModel):
     """Configuration for LLM text generation inference."""
 
@@ -21,14 +22,18 @@ class InferenceConfig(BaseModel):
 class LLMHF:
     """LLM wrapper for Hugging Face Transformers models."""
 
-    def __init__(self, *, model_name: str, tokenizer: AutoTokenizer, cuda_device: str="auto"):
+    def __init__(
+        self, *, model_name: str, tokenizer: AutoTokenizer, cuda_device: str = "auto"
+    ):
         """Initialize the Hugging Face LLM wrapper.
 
         Args:
             model_name: Name of the model to load from Hugging Face.
             tokenizer: Pre-initialized tokenizer for the model.
         """
-        logger.info(f"Loading model {model_name} on device {cuda_device} based on Hugging Face Transformers")
+        logger.info(
+            f"Loading model {model_name} on device {cuda_device} based on Hugging Face Transformers"
+        )
         self.model_name = model_name
         self.model = AutoModelForCausalLM.from_pretrained(
             model_name, torch_dtype="auto", device_map=cuda_device
@@ -62,13 +67,22 @@ class LLMHF:
             do_sample=inference_config.do_sample,
         )
         logger.info(f"Generated response for prompt: {prompt}")
-        logger.info(f"*"*20)
-        logger.info(f"Full input text: {self.tokenizer.decode(inputs['input_ids'][0], skip_special_tokens=False)}")
-        logger.info(f"*"*20)
-        return self.tokenizer.decode(outputs[0][inputs["input_ids"].shape[1]:], skip_special_tokens=False)
+        logger.info(f"*" * 20)
+        logger.info(
+            f"Full input text: {self.tokenizer.decode(inputs['input_ids'][0], skip_special_tokens=False)}"
+        )
+        logger.info(f"*" * 20)
+        return self.tokenizer.decode(
+            outputs[0][inputs["input_ids"].shape[1] :], skip_special_tokens=False
+        )
 
 
-def load_llm(*, model_name: str, cuda_device: str="auto", provider: Literal["hf", "vllm"]="hf"):
+def load_llm(
+    *,
+    model_name: str,
+    cuda_device: str = "auto",
+    provider: Literal["hf", "vllm"] = "hf",
+):
     """Load a language model with the specified provider.
 
     Args:

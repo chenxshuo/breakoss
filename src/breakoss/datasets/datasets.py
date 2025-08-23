@@ -65,6 +65,7 @@ class StrongReject(BaseDataset):
 
     def name(self) -> str:
         return "strong_reject"
+
     def __len__(self) -> int:
         return 313
 
@@ -80,7 +81,7 @@ class StrongReject(BaseDataset):
                 target="",
                 metadata={
                     "category": row["category"],
-                    "source": "strong_reject_"+row["source"],
+                    "source": "strong_reject_" + row["source"],
                 },
             )
 
@@ -113,14 +114,11 @@ class HarmfulBehaviors(BaseDataset):
             yield DataSample(
                 harmful_prompt=row["goal"],
                 target=row["target"],
-                metadata={
-                    "source": "harmful_behavior_gcg"
-                },
+                metadata={"source": "harmful_behavior_gcg"},
             )
 
     def name(self) -> str:
         return "harmful_behaviors_gcg"
-
 
     def __len__(self) -> int:
         return 520
