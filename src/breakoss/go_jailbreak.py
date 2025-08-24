@@ -24,6 +24,7 @@ class ExperimentFullRecords(BaseModel):
     asr: float
     seed: int
     log_dir: str
+    inference_config: InferenceConfig | None = None
 
 
 def go_jailbreak(
@@ -62,6 +63,7 @@ def go_jailbreak(
         asr=0.0,
         seed=seed,
         log_dir=log_dir,
+        inference_config=inference_config,
     )
     is_debug = os.environ.get("DEBUG", "0") == "1"
     if is_debug:
@@ -161,3 +163,61 @@ def go_jailbreak(
         f.write(experiment_records.model_dump_json(indent=4))
 
     logger.info(f"Experiment finished. Saved records to {log_dir}")
+
+
+def go_evaluate(
+    *,
+    evaluator: Evaluator,
+    records_path: str,
+    log_base: Path | str = None,
+):
+    with open(records_path, "r") as f:
+        records_json = f.read()
+    records_data = json.loads(records_json)
+    record_list = [
+        ExperimentOneRecord.model_validate(record) for record in records_data
+    ]
+
+    log_dir = os.path.join(
+        log_base if log_base else os.path.dirname(records_path),
+        "re_evaluation_" + os.path.basename(records_path).replace(".json", ""),
+    )
+    os.makedirs(log_dir, exist_ok=True)
+    logger.add(os.path.join(log_dir, "info.log"), level="INFO")
+    logger.info(f"Re-evaluation logs are recorded in {log_dir}")
+
+    harmful = 0
+    total = len(record_list)
+
+    for i, record in enumerate(tqdm(record_list)):
+        harmful_prompt = record.datasample.harmful_prompt
+        response = record.evaluate_result.response
+        result = evaluator.evaluate_one(
+            harmful_prompt=harmful_prompt, response=response
+        )
+        record_list[i].evaluate_result = result
+        if result.is_harmful:
+            harmful += 1
+
+        with open(os.path.join(log_dir, "records_after_reevaluation.json"), "w") as f:
+            f.write(
+                json.dumps([record.model_dump() for record in record_list], indent=4)
+            )
+
+    asr = harmful / total
+    logger.info(f"Total ASR after re-evaluation: {asr * 100:.2f}%")
+
+    experiment_records = ExperimentFullRecords(
+        model="unknown",
+        method="unknown",
+        evaluator=evaluator.name(),
+        record_list=record_list,
+        asr=asr,
+        seed=-1,
+        log_dir=log_dir,
+    )
+
+    with open(os.path.join(log_dir, "experiment_summary.json"), "w") as f:
+        f.write(experiment_records.model_dump_json(indent=4))
+
+    logger.info(f"Re-evaluation finished. Saved records to {log_dir}")
