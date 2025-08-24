@@ -26,7 +26,11 @@ def get_exp_dir(
     log_dir = os.path.join(
         log_base,
         model.model_name.replace("/", "_"),
-        f"{dataset_name}_[{starting_index}_{end_index}]" if dataset_name else "user_custom_data",
+        (
+            f"{dataset_name}_[{starting_index}_{end_index}]"
+            if dataset_name
+            else "user_custom_data"
+        ),
         method.name() if method else "no_method",
         evaluator.name(),
         f"seed_{seed}",

@@ -1,3 +1,10 @@
+"""Main jailbreaking experiment framework.
+
+This module provides the core functionality for running jailbreaking experiments
+and evaluating the effectiveness of different attack methods against language models.
+It handles the complete pipeline from prompt transformation to response evaluation.
+"""
+
 from breakoss.models import LLMHF, InferenceConfig
 from breakoss.methods import BaseMethod
 from breakoss.evaluators import Evaluator, EvaluateResult
@@ -12,11 +19,37 @@ from pydantic import BaseModel
 
 
 class ExperimentOneRecord(BaseModel):
+    """Record of a single jailbreaking experiment trial.
+
+    Contains both the input data sample and the evaluation result for
+    one prompt-response pair in a jailbreaking experiment.
+
+    Attributes:
+        datasample: The input data containing harmful prompt and metadata
+        evaluate_result: The evaluation result indicating if the response was harmful
+    """
+
     datasample: DataSample
     evaluate_result: EvaluateResult
 
 
 class ExperimentFullRecords(BaseModel):
+    """Complete record of a jailbreaking experiment session.
+
+    Contains all the metadata and results from a complete experiment run,
+    including attack success rate and individual trial records.
+
+    Attributes:
+        model: Name/identifier of the language model being tested
+        method: Name of the jailbreaking method used (or "no_method")
+        evaluator: Name of the evaluator used to assess harmfulness
+        record_list: List of individual experiment trial records
+        asr: Attack Success Rate - fraction of successful jailbreaks (0.0-1.0)
+        seed: Random seed used for reproducibility
+        log_dir: Directory where experiment logs and results are saved
+        inference_config: Configuration used for model inference
+    """
+
     model: str
     method: str
     evaluator: str
@@ -38,6 +71,29 @@ def go_jailbreak(
     seed: int = 42,
     log_base: Path | str = None,
 ):
+    """Run a complete jailbreaking experiment.
+
+    Executes a full jailbreaking experiment by applying a method to transform
+    harmful prompts, generating model responses, and evaluating the success rate.
+    Results are logged and saved to files for analysis.
+
+    Args:
+        model: The language model to test for jailbreaking vulnerabilities
+        method: The jailbreaking method to apply, or None for baseline (no transformation)
+        evaluator: The evaluator to assess whether responses contain harmful content
+        harmful_prompts: List of harmful prompts or dataset to test against
+        inference_config: Configuration parameters for model inference
+        starting_index: Index to start processing prompts from (for partial runs)
+        end_index: Index to stop processing prompts at, -1 for all (for partial runs)
+        seed: Random seed for reproducibility
+        log_base: Base directory for saving experiment logs and results
+
+    Returns:
+        None. Results are saved to files in the experiment log directory.
+
+    Environment Variables:
+        DEBUG: Set to "1" to enable debug mode (processes only 5 samples)
+    """
 
     log_dir = get_exp_dir(
         log_base=log_base,
@@ -171,6 +227,21 @@ def go_evaluate(
     records_path: str,
     log_base: Path | str = None,
 ):
+    """Re-evaluate existing experiment records with a different evaluator.
+
+    This function takes previously saved experiment records and re-evaluates
+    them using a new evaluator. This is useful for comparing different
+    evaluation methods on the same set of model responses.
+
+    Args:
+        evaluator: The evaluator to use for re-assessment
+        records_path: Path to JSON file containing existing experiment records
+        log_base: Base directory for saving re-evaluation results, defaults to
+                 directory containing the records file
+
+    Returns:
+        None. Re-evaluation results are saved to files in the log directory.
+    """
     with open(records_path, "r") as f:
         records_json = f.read()
     records_data = json.loads(records_json)
