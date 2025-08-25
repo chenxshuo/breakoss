@@ -8,7 +8,7 @@ strategies ranging from simple keyword-based detection to more sophisticated met
 from abc import ABC, abstractmethod
 from pydantic import BaseModel
 from typing import Iterable
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from breakoss.models import load_llm, InferenceConfig
 
 
 class EvaluateResult(BaseModel):
@@ -94,7 +94,10 @@ class LlamaGuardEvaluator(Evaluator):
         Loads the meta-llama/Llama-Guard-3-8B model for content evaluation.
         """
         # meta-llama/Llama-Guard-3-8B
-        ...
+        self.llama_model = load_llm(model_name="meta-llama/Llama-Guard-3-8B", cuda_device="auto", provider="hf")
+        self.model = self.llama_model.model
+        self.tokenizer = self.llama_model.tokenizer
+        self.inference_config = None
 
     def evaluate_one(self, *, harmful_prompt: str, response: str) -> EvaluateResult:
         """Evaluate a response using the Llama Guard model.
@@ -106,7 +109,38 @@ class LlamaGuardEvaluator(Evaluator):
         Returns:
             EvaluateResult with Llama Guard's safety assessment
         """
-        ...
+        _llama_chat = [ {"role": "user", "content": harmful_prompt}, {"role": "assistant", "content": response}, ]
+        inputs = self.tokenizer.apply_chat_template(_llama_chat, return_tensors="pt", return_dict=True)
+        if self.inference_config:
+            outputs = self.model.generate(**inputs, max_new_tokens=20, **self.inference_config)
+        else:   
+            outputs = self.model.generate(**inputs, max_new_tokens=20)
+        response = self.tokenizer.decode(outputs[0][len(inputs.input_ids[0]):], skip_special_tokens=True).strip('\n')
+        return EvaluateResult(
+            harmful_prompt=harmful_prompt,
+            response=response,
+            is_harmful=False,
+            harmful_score=0.0,
+            evaluator_justification="",
+            evaluator=self.__class__.__name__,
+        )
+
+    def name(self) -> str:
+        """Return the name of this evaluator.
+
+        Returns:
+            String identifier 'LlamaGuardEvaluator'
+        """
+        return "LlamaGuardEvaluator"
+
+    def set_inference_config(self, inference_config: InferenceConfig):
+        """Set the inference configuration for the Llama Guard model.
+
+        Args:
+            inference_config: Inference configuration for the Llama Guard model
+        """
+        self.inference_config = inference_config
+
 
 
 class StrongREJECTEvaluator(Evaluator):
