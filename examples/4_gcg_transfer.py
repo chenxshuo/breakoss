@@ -18,7 +18,7 @@ def moderate(chat):
     prompt_len = input_ids.shape[-1]
     return tokenizer.decode(output[0][prompt_len:], skip_special_tokens=True)
 
-df = pd.read_csv("data.csv")
+df = pd.read_csv("src/breakoss/datasets/harmful_behaviors.csv")
 harm_queries = []
 for index, row in df.iterrows():
     harm_queries.append(row['goal'])
