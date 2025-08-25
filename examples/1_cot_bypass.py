@@ -73,19 +73,22 @@ def main(
 def reevaluate():
     judge = RefusalWordsEvaluator()
 
-    # go_evaluate(
-    #     evaluator=judge,
-    #     records_path="/dss/dssmcmlfs01/pn39qo/pn39qo-dss-0000/di93zun/kaggle-breakoss/src/breakoss/../../breakoss_logs/openai_gpt-oss-20b/strong_reject_[0_-1]/CoTBypass/RefusalWordsEvaluator/seed_42/2025-08-24_00-26-59/records_before_evaluation.json"
-    # )
-    #
-    # go_evaluate(
-    #     evaluator=judge,
-    #     records_path="/dss/dssmcmlfs01/pn39qo/pn39qo-dss-0000/di93zun/kaggle-breakoss/src/breakoss/../../breakoss_logs/openai_gpt-oss-20b/harmful_behaviors_gcg_[0_-1]/CoTBypass/RefusalWordsEvaluator/seed_42/2025-08-24_00-29-21/records_before_evaluation.json"
-    # )
+    go_evaluate(
+        evaluator=judge,
+        records_path="/dss/dssmcmlfs01/pn39qo/pn39qo-dss-0000/di93zun/kaggle-breakoss/src/breakoss/../../breakoss_logs/openai_gpt-oss-20b/strong_reject_[0_-1]/CoTBypass/RefusalWordsEvaluator/seed_42/2025-08-24_00-26-59/records_before_evaluation.json",
+        extract_failure_cases=True,
+    )
 
     go_evaluate(
         evaluator=judge,
-        records_path="/dss/dssmcmlfs01/pn39qo/pn39qo-dss-0000/di93zun/kaggle-breakoss/src/breakoss/../../breakoss_logs/openai_gpt-oss-20b/harmful_behaviors_gcg_[250_-1]/CoTBypass/RefusalWordsEvaluator/seed_42/2025-08-24_00-50-01/records_before_evaluation.json"
+        records_path="/dss/dssmcmlfs01/pn39qo/pn39qo-dss-0000/di93zun/kaggle-breakoss/src/breakoss/../../breakoss_logs/openai_gpt-oss-20b/harmful_behaviors_gcg_[0_-1]/CoTBypass/RefusalWordsEvaluator/seed_42/2025-08-24_00-29-21/records_before_evaluation.json",
+        extract_failure_cases = True
+    )
+
+    go_evaluate(
+        evaluator=judge,
+        records_path="/dss/dssmcmlfs01/pn39qo/pn39qo-dss-0000/di93zun/kaggle-breakoss/src/breakoss/../../breakoss_logs/openai_gpt-oss-20b/harmful_behaviors_gcg_[250_-1]/CoTBypass/RefusalWordsEvaluator/seed_42/2025-08-24_00-50-01/records_before_evaluation.json",
+        extract_failure_cases = True
     )
 
 
