@@ -61,7 +61,7 @@ The most recent release can be installed from
 [PyPI](https://pypi.org/project/breakoss/) with uv:
 
 ```console
-$ uv pip install breakoss
+$ uv pip install -e .
 ```
 
 or with pip:
