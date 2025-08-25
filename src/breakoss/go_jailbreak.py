@@ -226,6 +226,7 @@ def go_evaluate(
     evaluator: Evaluator,
     records_path: str,
     log_base: Path | str = None,
+    extract_failure_cases: bool = False,
 ):
     """Re-evaluate existing experiment records with a different evaluator.
 
@@ -238,6 +239,7 @@ def go_evaluate(
         records_path: Path to JSON file containing existing experiment records
         log_base: Base directory for saving re-evaluation results, defaults to
                  directory containing the records file
+        extract_failure_cases: If True, extracts and saves failure cases separately
 
     Returns:
         None. Re-evaluation results are saved to files in the log directory.
@@ -260,6 +262,10 @@ def go_evaluate(
     harmful = 0
     total = len(record_list)
 
+    failure_cases = {
+        "failure_cases": [],
+        "source": records_path,
+    }
     for i, record in enumerate(tqdm(record_list)):
         harmful_prompt = record.datasample.harmful_prompt
         response = record.evaluate_result.response
@@ -269,11 +275,20 @@ def go_evaluate(
         record_list[i].evaluate_result = result
         if result.is_harmful:
             harmful += 1
+        if extract_failure_cases and not result.is_harmful:
+            failure_cases["failure_cases"].append(harmful_prompt)
+
 
         with open(os.path.join(log_dir, "records_after_reevaluation.json"), "w") as f:
             f.write(
                 json.dumps([record.model_dump() for record in record_list], indent=4)
             )
+
+    if extract_failure_cases:
+        with open(os.path.join(log_dir, "failure_cases.json"), "w") as f:
+            json.dump(failure_cases, f, indent=4)
+        logger.info(f"Saved failure cases to {os.path.join(log_dir, 'failure_cases.json')}")
+
 
     asr = harmful / total
     logger.info(f"Total ASR after re-evaluation: {asr * 100:.2f}%")
