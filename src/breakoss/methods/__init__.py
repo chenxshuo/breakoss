@@ -6,5 +6,6 @@ intended for research and evaluation of model robustness.
 """
 
 from .cot_bypass import CoTBypass, BaseMethod
+from .fake_overrefusal import FakeOverrefusal
 
-__all__ = ["CoTBypass", "BaseMethod"]
+__all__ = ["CoTBypass", "BaseMethod", "FakeOverrefusal"]
