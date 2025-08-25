@@ -25,6 +25,7 @@ class FakeOverrefusal(BaseMethod):
         Returns:
             String identifier 'CoTBypass'
         """
+        
         return "FakeOverrefusal"
 
     def jailbreak_transform(self, harmful_prompts: str) -> str:
