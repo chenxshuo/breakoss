@@ -53,6 +53,7 @@ dependencies = [
     "tqdm", # progress bars
     "click",
     "more_click",
+    "ollama",
     "typing-extensions",
     "pydantic>=2.11.7",
     "pandas>=2.3.2",

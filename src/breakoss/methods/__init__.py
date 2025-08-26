@@ -9,5 +9,6 @@ from .cot_bypass import CoTBypass, BaseMethod
 from .fake_overrefusal import FakeOverrefusal
 from .intention_hijack import IntentHijack
 from .plan_injection import PlanInjection
+from .nanogcg import GCGConfig, ProbeSamplingConfig, run_batch
 
-__all__ = ["CoTBypass", "BaseMethod", "FakeOverrefusal", "IntentHijack", "PlanInjection"]
+__all__ = ["CoTBypass", "BaseMethod", "FakeOverrefusal", "IntentHijack", "PlanInjection", "GCGConfig", "ProbeSamplingConfig", "run_batch"]

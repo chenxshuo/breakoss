@@ -60,6 +60,10 @@ python example/2_fake_overrefusal.py one_example
 ```
 
 - run the third method `gcg`
+```bash
+python example/3_gcg.py
+python example/3-1_gcg_transfer.py
+```
 
 
 ### ⚖️ License

@@ -1,8 +1,6 @@
-import nanogcg
 import torch
 import copy
-
-from src.breakoss.methods.nanogcg import GCGConfig, ProbeSamplingConfig, run_batch
+from breakoss.methods import GCGConfig, ProbeSamplingConfig, run_batch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import pandas as pd
 import argparse
