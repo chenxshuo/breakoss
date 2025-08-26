@@ -140,11 +140,11 @@ Fake Overrefusal Query:"""
         response_text = self.tokenizer.decode(response_tokens, skip_special_tokens=False)
 
         if "</think>" in response_text:
-                response_text_without_thinking = response_text.split("</think>")[1].strip()
-                if "**Rationale" in response_text_without_thinking:
-                    response_text_without_thinking = response_text_without_thinking.split("**Rationale")[0].strip()
-                    if "Fake Overrefusal Variation:" in response_text_without_thinking:
-                        response_text_without_thinking = response_text_without_thinking.replace("Fake Overrefusal Variation:", "")
+            response_text_without_thinking = response_text.split("</think>")[1].strip()
+            if "**Rationale" in response_text_without_thinking:
+                response_text_without_thinking = response_text_without_thinking.split("**Rationale")[0].strip()
+                if "Fake Overrefusal Variation:" in response_text_without_thinking:
+                    response_text_without_thinking = response_text_without_thinking.replace("Fake Overrefusal Variation:", "")
         match = re.search(r'"(.*?)"', response_text_without_thinking, flags=re.DOTALL)
         if match:
             rephrased_question = match.group(1)
