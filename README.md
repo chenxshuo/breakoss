@@ -94,51 +94,48 @@ python examples/5_plan_injection.py one_example
 
 ## 📂 Folder Structure 
 
-```
-
 ├── demo # submission to Kaggle 
-│   ├── breakoss-findings-1-cotbypss.json
-│   ├── breakoss-findings-2-fake-over-refusal-cotbypass.json
-│   ├── breakoss-findings-3-coercive-optimization.json
-│   ├── breakoss-findings-4-intent-hijack.json
-│   ├── breakoss-findings-5-plan-injection.json
-│   ├── demo_notebook.ipynb
-│   └── results
+│  ├── breakoss-findings-1-cotbypss.json
+│  ├── breakoss-findings-2-fake-over-refusal-cotbypass.json
+│  ├── breakoss-findings-3-coercive-optimization.json
+│  ├── breakoss-findings-4-intent-hijack.json
+│  ├── breakoss-findings-5-plan-injection.json
+│  ├── demo_notebook.ipynb
+│  └── results
 ├── docs
-│   └── source
+│  └── source
 ├── examples # example scripts to run each method
-│   ├── 1_cot_bypass.py
-│   ├── 2_fake_overrefusal.py
-│   ├── 3-1_gcg_transfer.py
-│   ├── 3_gcg.py
-│   ├── 4_intent_hijack.py
-│   ├── 5_plan_injection.py
-│   ├── deploy.sh
-│   ├── display.py
-│   ├── llm_inference.py
-│   ├── prepare_intent_plan.py
-│   └── strongreject_with_intent_and_plan.json
+│  ├── 1_cot_bypass.py
+│  ├── 2_fake_overrefusal.py
+│  ├── 3-1_gcg_transfer.py
+│  ├── 3_gcg.py
+│  ├── 4_intent_hijack.py
+│  ├── 5_plan_injection.py
+│  ├── deploy.sh
+│  ├── display.py
+│  ├── llm_inference.py
+│  ├── prepare_intent_plan.py
+│  └── strongreject_with_intent_and_plan.json
 ├── pyproject.toml
 ├── src
-│   └── breakoss
-│       ├── api.py
-│       ├── cli.py
-│       ├── datasets # dataset loaders
-│       ├── evaluators # evaluation implementations
-│       ├── go_jailbreak.py
-│       ├── __init__.py
-│       ├── __main__.py
-│       ├── methods # method implementations
-│       ├── models # model wrappers
-│       ├── __pycache__
-│       ├── py.typed
-│       ├── utils.py
-│       └── version.py
-│   └── breakoss
+│  └── breakoss
+│      ├── api.py
+│      ├── cli.py
+│      ├── datasets # dataset loaders
+│      ├── evaluators # evaluation implementations
+│      ├── go_jailbreak.py
+│      ├── __init__.py
+│      ├── __main__.py
+│      ├── methods # method implementations
+│      ├── models # model wrappers
+│      ├── __pycache__
+│      ├── py.typed
+│      ├── utils.py
+│      └── version.py
+│  └── breakoss
 ├── tests # tests for the package
 ├── tox.ini
 └── uv.lock
-```
 
 ### ⚖️ License
 
