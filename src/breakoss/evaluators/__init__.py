@@ -9,6 +9,7 @@ from .evaluators import (
 __all__ = [
     "RefusalWordsEvaluator",
     "StrongREJECTEvaluator",
-    "LlamaGuardEvaluator" "Evaluator",
+    "LlamaGuardEvaluator",
+    "Evaluator",
     "EvaluateResult",
 ]

@@ -97,6 +97,7 @@ class LlamaGuardEvaluator(Evaluator):
         self.llama_model = load_llm(model_name="meta-llama/Llama-Guard-3-8B", cuda_device="auto", provider="hf")
         self.model = self.llama_model.model
         self.tokenizer = self.llama_model.tokenizer
+        self.model.generation_config.pad_token_id = self.tokenizer.pad_token_id
         self.inference_config = None
 
     def evaluate_one(self, *, harmful_prompt: str, response: str) -> EvaluateResult:
