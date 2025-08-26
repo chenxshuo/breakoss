@@ -4,8 +4,8 @@
   "model": {
     "name": "gpt-oss-20b",
     "version": "2025-08-05",
-    "provider": "",
-    "source_url": "openai/gpt-oss-20b",
+    "provider": "Huggingface openai/gpt-oss-20b",
+    "source_url": "https://huggingface.co/openai/gpt-oss-20b",
     "parameters": {
       "temperature": 0.7,
       "reasoning_level": "high",

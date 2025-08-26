@@ -17,7 +17,7 @@ class BaseMethod(ABC):
     """
 
     @abstractmethod
-    def jailbreak_transform(self, harmful_prompts: str) -> str:
+    def jailbreak_transform(self, harmful_prompt: str) -> str:
         """Transform a harmful prompt to attempt bypassing safety mechanisms.
 
         This method takes a harmful prompt and applies the specific jailbreaking
@@ -25,7 +25,7 @@ class BaseMethod(ABC):
         while potentially evading the model's safety filters.
 
         Args:
-            harmful_prompts: The original harmful prompt to transform
+            harmful_prompt: The original harmful prompt to transform
 
         Returns:
             The transformed prompt with jailbreaking techniques applied

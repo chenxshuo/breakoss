@@ -7,5 +7,6 @@ intended for research and evaluation of model robustness.
 
 from .cot_bypass import CoTBypass, BaseMethod
 from .fake_overrefusal import FakeOverrefusal
+from .intention_hijack import IntentHijack
 
-__all__ = ["CoTBypass", "BaseMethod", "FakeOverrefusal"]
+__all__ = ["CoTBypass", "BaseMethod", "FakeOverrefusal", "IntentHijack"]
