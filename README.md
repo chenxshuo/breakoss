@@ -87,13 +87,12 @@ python examples/5_plan_injection.py one_example
 - Evaluate Intent Hijack on StrongReject  
 ```bash
  python examples/4_intent_hijack.py eval_on_strongreject
- 
 ```
 
 - Evaluate Plan Injection on StrongReject  
 ```bash
  python examples/5_plan_injection.py eval_on_strongreject
-
+```
 
 ## 📂 Folder Structure 
 
