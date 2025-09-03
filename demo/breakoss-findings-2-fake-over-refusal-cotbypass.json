@@ -16,7 +16,8 @@
     }
   },
   "environment": {
-    "endpoint": "hosted web-ui"
+    "hardware": "A100 / H100",
+    "libraries": ["torch==2.5.1+cu121", "transformers==4.55.4"]
   },
   "issue_summary": {
     "title": "Model generates assassination instructions instead of refusing harmful request",
