@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 from tqdm import tqdm
 import json
-from .utils import get_exp_dir
+from .utils import get_exp_dir, set_seed
 from pydantic import BaseModel
 
 
@@ -121,6 +121,7 @@ def go_jailbreak(
         log_dir=log_dir,
         inference_config=inference_config,
     )
+    set_seed(seed)
     is_debug = os.environ.get("DEBUG", "0") == "1"
     if is_debug:
         debug_limit = 5
