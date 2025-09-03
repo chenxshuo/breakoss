@@ -40,7 +40,7 @@ class LLMHF:
         )
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    def chat(self, *, prompt: str, inference_config: InferenceConfig):
+    def chat(self, *, prompt: str, inference_config: InferenceConfig, system_prompt: str = None) -> str:
         """Generate a chat response using the loaded model.
 
         Args:
