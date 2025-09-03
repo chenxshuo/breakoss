@@ -42,9 +42,28 @@ open-source models.
 
 
 ```bash
+
+# note that we use A100 with cu121
+
 uv venv
 source .venv/bin/activate
 uv pip install -e .
+
+```
+
+### Reproduce the submitted findings 
+
+```bash
+python reproduce_finding_issues.py --json_path demo/breakoss-findings-1-cotbypass.json
+
+python reproduce_finding_issues.py --json_path demo/breakoss-findings-2-fake-over-refusal-cotbypass.json
+
+python reproduce_finding_issues.py --json_path demo/breakoss-findings-3-coercive-optimization.json
+
+python reproduce_finding_issues.py --json_path demo/breakoss-findings-4-intent-hijack.json
+
+python reproduce_finding_issues.py --json_path demo/breakoss-findings-5-plan-injection.json
+
 ```
 
 ### 📦  Starting Point

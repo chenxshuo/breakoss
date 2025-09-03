@@ -63,6 +63,7 @@ dependencies = [
     "loguru>=0.7.3",
     "ipdb>=0.13.13",
     "fire>=0.7.1",
+    "scipy>=1.15.3",
 ]
 
 # see https://peps.python.org/pep-0735/ and https://docs.astral.sh/uv/concepts/dependencies/#dependency-groups
