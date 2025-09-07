@@ -5,10 +5,13 @@ from typing import Literal
 from breakoss.models import load_llm, InferenceConfig
 from breakoss.methods import FakeOverrefusal
 from breakoss.evaluators import LlamaGuardEvaluator, RefusalWordsEvaluator
-from breakoss.datasets import StrongReject, HarmfulBehaviors
+from breakoss.datasets import StrongReject, HarmfulBehaviors, HarmBench, JBBHarmfulBehaviors, CatQA
 import fire
+import pathlib
 import gc
+import os
 import torch
+from loguru import logger
 
 def one_example():
 
@@ -27,9 +30,7 @@ def one_example():
 
     print(f"original harmful query is {harmful_example}\n")
     print(f"Fake overrefusal query is {fake_overrefusal_example}")
-    del fake_over_refusal # free GPU memory
-    gc.collect()
-    torch.cuda.empty_cache()
+
     model = load_llm(model_name="openai/gpt-oss-20b", cuda_device="auto", provider="hf")
     
     go_jailbreak(
@@ -69,8 +70,31 @@ def one_example():
 #         seed=seed,
 #         inference_config=inference_config
 #     )
-    
 
+def transform_original_prompts(
+    dataset_name: str,
+):
+
+    if dataset_name == "StrongReject":
+        dataset = StrongReject()
+    elif dataset_name == "HarmfulBehaviors":
+        dataset = HarmfulBehaviors()
+    elif dataset_name == "HarmBench":
+        dataset = HarmBench()
+    elif dataset_name == "CatQA":
+        dataset = CatQA()
+    elif dataset_name == "JBBHarmfulBehaviors":
+        dataset = JBBHarmfulBehaviors()
+    else:
+        raise ValueError(f"Unknown dataset name: {dataset_name}")
+
+    fake_over_refusal = FakeOverrefusal()
+    logger.info(f"Transforming {len(dataset)} prompts from {dataset_name} using FakeOverrefusal method.")
+    dataset.apply_transformation(
+        fake_over_refusal,
+        stored_path=os.path.join(os.path.dirname(__file__), "../transformed_datasets"),
+        batch_size=8,
+    )
 
 if __name__ == "__main__":
     fire.Fire()
