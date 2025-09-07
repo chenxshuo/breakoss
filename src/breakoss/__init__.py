@@ -2,7 +2,15 @@
 
 from .api import hello, square
 from .go_jailbreak import go_jailbreak, go_evaluate
-from .datasets import DataSample, StrongReject, HarmfulBehaviors, BaseDataset
+from .datasets import (
+    DataSample,
+    StrongReject,
+    HarmfulBehaviors,
+    BaseDataset,
+    HarmBench,
+    JBBHarmfulBehaviors,
+    CatQA,
+)
 
 # being explicit about exports is important!
 __all__ = [
@@ -14,4 +22,7 @@ __all__ = [
     "StrongReject",
     "HarmfulBehaviors",
     "BaseDataset",
+    "HarmBench",
+    "JBBHarmfulBehaviors",
+    "CatQA",
 ]
