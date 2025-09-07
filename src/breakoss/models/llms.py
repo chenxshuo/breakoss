@@ -39,6 +39,8 @@ class LLMHF:
             model_name, torch_dtype="auto", device_map=cuda_device
         )
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.tokenizer.padding_side = "left"
+
 
     def chat(self, *, prompt: str, inference_config: InferenceConfig, system_prompt: str = None) -> str:
         """Generate a chat response using the loaded model.
@@ -76,6 +78,45 @@ class LLMHF:
             outputs[0][inputs["input_ids"].shape[1] :], skip_special_tokens=False
         )
 
+    def chat_batch(self, *, prompts: list[str], inference_config: InferenceConfig, system_prompt: str = None) -> list[str]:
+        """Generate chat responses for a batch of prompts using the loaded model.
+
+        Args:
+            prompts: List of input text prompts for the model.
+            inference_config: Configuration parameters for text generation.
+
+        Returns:
+            List of generated text responses from the model.
+        """
+        messages = [[{"role": "user", "content": prompt}] for prompt in prompts]
+        inputs = self.tokenizer.apply_chat_template(
+            messages,
+            add_generation_prompt=True,
+            return_tensors="pt",
+            return_dict=True,
+            padding=True,
+        ).to(self.model.device)
+
+        outputs = self.model.generate(
+            **inputs,
+            max_new_tokens=inference_config.max_new_tokens,
+            temperature=inference_config.temperature,
+            top_p=inference_config.top_p,
+            repetition_penalty=inference_config.repetition_penalty,
+            do_sample=inference_config.do_sample,
+        )
+        logger.info(f"Generated responses for {len(prompts)} prompts.")
+        responses = []
+        for i, prompt in enumerate(prompts):
+            response = self.tokenizer.decode(
+                outputs[i][inputs["input_ids"].shape[1] :], skip_special_tokens=False
+            )
+            logger.info(f"Prompt: {prompt}")
+            logger.info(f"Response: {response}")
+            logger.info(f"*" * 20)
+            responses.append(response)
+        return responses
+
 
 def load_llm(
     *,
@@ -99,7 +140,7 @@ def load_llm(
     """
     if provider == "hf":
         return LLMHF(
-            model_name=model_name, tokenizer=AutoTokenizer.from_pretrained(model_name)
+            model_name=model_name, tokenizer=AutoTokenizer.from_pretrained(model_name), cuda_device=cuda_device
         )
     elif provider == "vllm":
         raise NotImplementedError("VLLM provider is not implemented yet.")
