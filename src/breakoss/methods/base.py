@@ -32,6 +32,22 @@ class BaseMethod(ABC):
         """
         raise NotImplementedError
 
+    def jailbreak_transform_batch(self, harmful_prompts: list[str]) -> list[str]:
+        """Batch version of jailbreak_transform for efficiency.
+
+        This method processes a list of harmful prompts and applies the
+        jailbreaking transformation to each prompt in the list. The default
+        implementation simply calls `jailbreak_transform` on each prompt,
+        but subclasses can override this method for optimized batch processing.
+
+        Args:
+            harmful_prompts: List of harmful prompts to transform
+
+        Returns:
+            List of transformed prompts with jailbreaking techniques applied
+        """
+        return [self.jailbreak_transform(prompt) for prompt in harmful_prompts]
+
     @abstractmethod
     def name(self) -> str:
         """Return the name/identifier of this jailbreaking method.
