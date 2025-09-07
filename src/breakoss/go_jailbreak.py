@@ -55,6 +55,7 @@ class ExperimentFullRecords(BaseModel):
     evaluator: str
     record_list: list[ExperimentOneRecord]
     asr: float
+    harmful_scores: float | None = None
     seed: int
     log_dir: str
     inference_config: InferenceConfig | None = None
@@ -63,14 +64,15 @@ class ExperimentFullRecords(BaseModel):
 def go_jailbreak(
     model: LLMHF,
     method: BaseMethod | None,
-    evaluator: Evaluator,
+    evaluator: Evaluator | None,
     harmful_prompts: list[str | BaseDataset],
     inference_config: InferenceConfig,
+    batch_size : int = 1,
     starting_index: int = 0,
     end_index: int = -1,
     seed: int = 42,
     log_base: Path | str = None,
-):
+) -> ExperimentFullRecords:
     """Run a complete jailbreaking experiment.
 
     Executes a full jailbreaking experiment by applying a method to transform
@@ -82,6 +84,7 @@ def go_jailbreak(
         method: The jailbreaking method to apply, or None for baseline (no transformation)
         evaluator: The evaluator to assess whether responses contain harmful content
         harmful_prompts: List of harmful prompts or dataset to test against
+        batch_size: Number of prompts to process in a batch
         inference_config: Configuration parameters for model inference
         starting_index: Index to start processing prompts from (for partial runs)
         end_index: Index to stop processing prompts at, -1 for all (for partial runs)
@@ -113,8 +116,8 @@ def go_jailbreak(
 
     experiment_records = ExperimentFullRecords(
         model=model.model_name,
-        method=method.name() if method else "no_method",
-        evaluator=evaluator.name(),
+        method=method.name() if method else "direct",
+        evaluator=evaluator.name() if evaluator else "pure_inference_no_eval",
         record_list=[],
         asr=0.0,
         seed=seed,
@@ -128,13 +131,10 @@ def go_jailbreak(
         logger.critical(f"Debug mode is on, only process {debug_limit} samples.")
 
     record_list = []
-    for i, harmful_prompt_obj in enumerate(
-        tqdm(
-            harmful_prompts,
+    for i in tqdm(
+            range(0, len(harmful_prompts), batch_size),
             desc="Processing harmful prompts",
-            total=len(harmful_prompts),
-        )
-    ):
+        ):
         if not (i >= starting_index and (end_index == -1 or i < end_index)):
             logger.critical(
                 f"Skipping prompts index {i} as it is out of range of {starting_index} to {end_index}."
@@ -147,80 +147,109 @@ def go_jailbreak(
                 )
                 break
 
-        if isinstance(harmful_prompt_obj, DataSample):
-            harmful_prompt = harmful_prompt_obj.harmful_prompt
-        else:
-            harmful_prompt = harmful_prompt_obj
+        harmful_prompt_objs = []
+        for j in range(i, min(i + batch_size, len(harmful_prompts))):
+            harmful_prompt_objs.append(
+                harmful_prompts[j]
+            )
+        harmful_prompts_input = []
+        for obj in harmful_prompt_objs:
+            if isinstance(obj, DataSample):
+                harmful_prompts_input.append(obj.harmful_prompt)
+            else:
+                harmful_prompts_input.append(obj)
 
         if method:
-            jailbreak_prompt = method.jailbreak_transform(harmful_prompt)
+            jailbreak_prompts = method.jailbreak_transform_batch(harmful_prompts_input)
         else:
-            jailbreak_prompt = harmful_prompt
+            jailbreak_prompts = harmful_prompts_input
 
-        response = model.chat(
-            prompt=jailbreak_prompt, inference_config=inference_config
-        )
-        logger.info(f"Model Response: {response}")
-        record_list.append(
-            ExperimentOneRecord(
-                datasample=DataSample(
-                    harmful_prompt=harmful_prompt,
-                    target=(
-                        ""
-                        if isinstance(harmful_prompt_obj, str)
-                        else harmful_prompt_obj.target
-                    ),
-                    metadata=(
-                        harmful_prompt_obj.metadata
-                        if isinstance(harmful_prompt_obj, DataSample)
-                        else {"source": "user provided"}
-                    ),
-                ),
-                evaluate_result=EvaluateResult(
-                    harmful_prompt=harmful_prompt,
-                    response=response,
-                    is_harmful=False,
-                    harmful_score=-1,
-                    evaluator_justification="",
-                    evaluator=evaluator.name(),
-                ),
+        try:
+            responses = model.chat_batch(
+                prompts=jailbreak_prompts, inference_config=inference_config
             )
-        )
+        except Exception as e:
+            responses = []
+            for one_prompt in jailbreak_prompts:
+                response = model.chat(
+                    prompt=one_prompt, inference_config=inference_config
+                )
+                responses.append(response)
+            logger.warning(f"Batch inference failed with error {e}, fallback to single inference.")
+
+        for harmful_prompt, harmful_prompt_obj, response in zip(harmful_prompts_input, harmful_prompt_objs, responses):
+            logger.info(f"Model Response: {response}")
+            record_list.append(
+                ExperimentOneRecord(
+                    datasample=DataSample(
+                        harmful_prompt=harmful_prompt,
+                        target=(
+                            ""
+                            if isinstance(harmful_prompt_obj, str)
+                            else harmful_prompt_obj.target
+                        ),
+                        metadata=(
+                            harmful_prompt_obj.metadata
+                            if isinstance(harmful_prompt_obj, DataSample)
+                            else {"source": "user provided"}
+                        ),
+                    ),
+                    evaluate_result=EvaluateResult(
+                        harmful_prompt=harmful_prompt,
+                        response=response,
+                        is_harmful=False,
+                        harmful_score=-1,
+                        evaluator_justification="",
+                        evaluator=evaluator.name() if evaluator else "pure_inference_no_eval",
+                    ),
+                )
+            )
 
         with open(os.path.join(log_dir, "records_before_evaluation.json"), "w") as f:
             f.write(
                 json.dumps([record.model_dump() for record in record_list], indent=4)
             )
 
-    harmful = 0
-    total = len(record_list)
+    if evaluator is not None:
+        harmful = 0
+        total = len(record_list)
 
-    for i, record in enumerate(tqdm(record_list)):
-        harmful_prompt = record.datasample.harmful_prompt
-        response = record.evaluate_result.response
-        result = evaluator.evaluate_one(
-            harmful_prompt=harmful_prompt, response=response
-        )
-        record_list[i].evaluate_result = result
-        if result.is_harmful:
-            harmful += 1
-
-        with open(os.path.join(log_dir, "records_after_evaluation.json"), "w") as f:
-            f.write(
-                json.dumps([record.model_dump() for record in record_list], indent=4)
+        for i, record in enumerate(tqdm(record_list)):
+            harmful_prompt = record.datasample.harmful_prompt
+            response = record.evaluate_result.response
+            result = evaluator.evaluate_one(
+                harmful_prompt=harmful_prompt, response=response
             )
+            record_list[i].evaluate_result = result
+            if result.is_harmful:
+                harmful += 1
 
-    asr = harmful / total
-    logger.info(f"Total ASR: {asr * 100:.2f}%")
+            with open(os.path.join(log_dir, "records_after_evaluation.json"), "w") as f:
+                f.write(
+                    json.dumps([record.model_dump() for record in record_list], indent=4)
+                )
 
-    experiment_records.record_list = record_list
-    experiment_records.asr = asr
+        asr = harmful / total
+        logger.info(f"Total ASR: {asr * 100:.2f}%")
 
-    with open(os.path.join(log_dir, "experiment_summary.json"), "w") as f:
-        f.write(experiment_records.model_dump_json(indent=4))
+        experiment_records.record_list = record_list
+        experiment_records.asr = asr
 
-    logger.info(f"Experiment finished. Saved records to {log_dir}")
+        with open(os.path.join(log_dir, "experiment_summary.json"), "w") as f:
+            f.write(experiment_records.model_dump_json(indent=4))
 
+        logger.info(f"Experiment finished. Saved records to {log_dir}")
+    else:
+        experiment_records.record_list = record_list
+        experiment_records.asr = -10000.0  # Indicate ASR not computed
+
+        with open(os.path.join(log_dir, "experiment_summary.json"), "w") as f:
+            f.write(experiment_records.model_dump_json(indent=4))
+
+        logger.warning("No evaluator provided, skipping evaluation step.")
+        logger.info(f"Experiment finished. Saved records to {log_dir}")
+
+    return experiment_records
 
 def go_evaluate(
     *,
@@ -228,7 +257,7 @@ def go_evaluate(
     records_path: str,
     log_base: Path | str = None,
     extract_failure_cases: bool = False,
-):
+) -> ExperimentFullRecords:
     """Re-evaluate existing experiment records with a different evaluator.
 
     This function takes previously saved experiment records and re-evaluates
@@ -262,9 +291,14 @@ def go_evaluate(
 
     harmful = 0
     total = len(record_list)
+    harmful_scores = 0
 
     failure_cases = {
         "failure_cases": [],
+        "source": records_path,
+    }
+    success_cases = {
+        "success_cases": [],
         "source": records_path,
     }
     for i, record in enumerate(tqdm(record_list)):
@@ -278,21 +312,34 @@ def go_evaluate(
             harmful += 1
         if extract_failure_cases and not result.is_harmful:
             failure_cases["failure_cases"].append(harmful_prompt)
+        else:
+            success_cases["success_cases"].append(harmful_prompt)
+
+        if evaluator.name() == "StrongREJECTEvaluator":
+            harmful_scores += result.harmful_score
 
 
-        with open(os.path.join(log_dir, "records_after_reevaluation.json"), "w") as f:
+        with open(os.path.join(log_dir, f"records_after_reevaluation_by_{evaluator.name()}.json"), "w") as f:
             f.write(
                 json.dumps([record.model_dump() for record in record_list], indent=4)
             )
 
     if extract_failure_cases:
-        with open(os.path.join(log_dir, "failure_cases.json"), "w") as f:
+        with open(os.path.join(log_dir, f"failure_cases_by_{evaluator.name()}.json"), "w") as f:
             json.dump(failure_cases, f, indent=4)
-        logger.info(f"Saved failure cases to {os.path.join(log_dir, 'failure_cases.json')}")
+        logger.info(f"Saved failure cases to {os.path.join(log_dir, f'failure_cases_by_{evaluator.name()}.json')}")
+
+        with open(os.path.join(log_dir, f"success_cases_by_{evaluator.name()}.json"), "w") as f:
+            json.dump(success_cases, f, indent=4)
+        logger.info(f"Saved success cases to {os.path.join(log_dir, f'success_cases_by_{evaluator.name()}.json')}")
 
 
     asr = harmful / total
     logger.info(f"Total ASR after re-evaluation: {asr * 100:.2f}%")
+
+    if evaluator.name() == "StrongREJECTEvaluator":
+        avg_harmful_score = harmful_scores / total
+        logger.info(f"Average harmful score (for StrongREJECTEvaluator) after re-evaluation: {avg_harmful_score:.2f}")
 
     experiment_records = ExperimentFullRecords(
         model="unknown",
@@ -300,11 +347,18 @@ def go_evaluate(
         evaluator=evaluator.name(),
         record_list=record_list,
         asr=asr,
+        harmful_scores=avg_harmful_score if evaluator.name() == "StrongREJECTEvaluator" else None,
         seed=-1,
         log_dir=log_dir,
     )
 
-    with open(os.path.join(log_dir, "experiment_summary.json"), "w") as f:
+    with open(os.path.join(log_dir, f"experiment_summary_reevaluate_by_{evaluator.name()}.json"), "w") as f:
         f.write(experiment_records.model_dump_json(indent=4))
 
-    logger.info(f"Re-evaluation finished. Saved records to {log_dir}")
+    if evaluator.name() == "StrongREJECTEvaluator":
+        logger.info(f"Re-evaluation by {evaluator.name()} finished w/ ASR of {asr} and average harmful score of {avg_harmful_score}. Saved records to {log_dir}/experiment_summary_reevaluate_by_{evaluator.name()}.json")
+    else:
+        logger.info(f"Re-evaluation by {evaluator.name()} finished w/ ASR of {asr}. Saved records to {log_dir}/experiment_summary_reevaluate_by_{evaluator.name()}.json")
+
+
+    return experiment_records
