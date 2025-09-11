@@ -65,3 +65,25 @@ class IntentHijack(BaseMethod):
         response = self.model.chat(prompt=prompt, inference_config=self.inference_config)
         logger.info(f"Converted harmful prompt to academic prompt: {response}")
         return response
+
+    def jailbreak_transform_batch(self, harmful_prompts: list[str]) -> list[str]:
+        """Transform a batch of harmful prompts using intention hijack.
+
+        Appends a prompt that reframes the harmful request as an academic exercise.
+
+        Args:
+            harmful_prompts: List of original harmful prompts to transform
+
+        Returns:
+            List of transformed prompts with intention hijack framing appended
+        """
+        prompts = [CONVERT_TEMPLATE.format(question=hp) for hp in harmful_prompts]
+        responses = self.model.chat_batch(prompts=prompts, inference_config=self.inference_config)
+
+        def extract(response: str):
+            response = response.strip().split("</think>")[-1].split("<|im_end|>")[0].strip()
+            logger.info(f"Extracted academic prompt: {response}")
+            return response
+        responses = list(map(extract, responses))
+
+        return responses
