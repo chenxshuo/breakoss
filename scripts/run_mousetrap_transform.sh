@@ -1,0 +1,5 @@
+python examples/baseline_mousetrap.py transform_original_prompts StrongReject
+python examples/baseline_mousetrap.py transform_original_prompts HarmfulBehaviors
+python examples/baseline_mousetrap.py transform_original_prompts HarmBench
+python examples/baseline_mousetrap.py transform_original_prompts JBBHarmfulBehaviors
+python examples/baseline_mousetrap.py transform_original_prompts CatQA
