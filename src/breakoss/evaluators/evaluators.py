@@ -323,12 +323,14 @@ class HarmBenchEvaluator(Evaluator):
         )
 
         try:
-
             model_response = self.model.generate([prompt], self.inference_params, use_tqdm=False)
             model_response = model_response[0].outputs[0].text.strip().lower()
         except Exception as e:
             model_response = f"Exception {e}"
-            logger.error(f"Exception while evaluating: {e}")
+            logger.error(f"Exception while evaluating: {e}; Truncating prompt and retrying.")
+            prompt = prompt[:2048]
+            model_response = self.model.generate([prompt], self.inference_params, use_tqdm=False)
+            model_response = model_response[0].outputs[0].text.strip().lower()
 
         if model_response.startswith("yes"):
             is_harmful = True
