@@ -15,6 +15,8 @@ from tqdm import tqdm
 class DataSample(BaseModel):
     """A single data sample containing a harmful prompt and associated metadata."""
 
+    # if the harmful prompt has been transformed, store the original here
+    original_harmful_prompt: str = ""
     # The input prompt for the model
     harmful_prompt: str
     # The expected output from the model
@@ -90,7 +92,14 @@ class StrongReject(BaseDataset):
             self.data_path = os.path.join(
                 os.path.dirname(__file__), "strongreject_dataset.csv"
             )
+        else:
+            self.data_path = data_path
         self.pd = pd.read_csv(self.data_path)
+        if "forbidden_prompt_original" in self.pd.columns:
+            self.add_original_prompts = True
+        else:
+            self.add_original_prompts = False
+
 
     def name(self) -> str:
         return "strong_reject"
@@ -105,14 +114,21 @@ class StrongReject(BaseDataset):
             DataSample: Data samples with harmful prompts and metadata.
         """
         for index, row in self.pd.iterrows():
-            yield DataSample(
-                harmful_prompt=row["forbidden_prompt"],
-                target="",
-                metadata={
-                    "category": row["category"],
-                    "source": "strong_reject_" + row["source"],
-                },
-            )
+            try:
+                yield DataSample(
+                    original_harmful_prompt=row["forbidden_prompt_original"] if self.add_original_prompts else "",
+                    harmful_prompt=row["forbidden_prompt"],
+                    target="",
+                    metadata={
+                        "category": row["category"],
+                        "source": "strong_reject_" + row["source"],
+                    },
+                )
+            except Exception as e:
+                logger.error(f"Error processing row {index}: {e}")
+                logger.error(f"original_harmful_prompt: {row['forbidden_prompt_original']}")
+                logger.error(f"harmful_prompt: {row['forbidden_prompt']}")
+                continue
     def __getitem__(self, index: int) -> DataSample:
         """Get a specific data sample by index.
 
@@ -123,14 +139,30 @@ class StrongReject(BaseDataset):
             DataSample: The data sample at the specified index.
         """
         row = self.pd.iloc[index]
-        return DataSample(
-            harmful_prompt=row["forbidden_prompt"],
-            target="",
-            metadata={
-                "category": row["category"],
-                "source": "strong_reject_" + row["source"],
-            },
-        )
+        try:
+            one_sample = DataSample(
+                original_harmful_prompt=row["forbidden_prompt_original"] if self.add_original_prompts else "",
+                harmful_prompt=row["forbidden_prompt"],
+                target="",
+                metadata={
+                    "category": row["category"],
+                    "source": "strong_reject_" + row["source"],
+                },
+            )
+        except Exception as e:
+            logger.error(f"Error processing row {index}: {e}")
+            logger.error(f"original_harmful_prompt: {row['forbidden_prompt_original']}")
+            logger.error(f"harmful_prompt: {row['forbidden_prompt']}")
+            one_sample = DataSample(
+                original_harmful_prompt=row["forbidden_prompt_original"] if self.add_original_prompts else "",
+                harmful_prompt=row["forbidden_prompt_original"] if self.add_original_prompts else "",
+                target="",
+                metadata={
+                    "category": "",
+                    "source": "strong_reject_",
+                },
+            )
+        return one_sample
 
     def apply_transformation(self, jailbreak_method: BaseMethod, stored_path: pathlib.Path, batch_size: int = 1):
         self.pd["forbidden_prompt_original"] = self.pd["forbidden_prompt"]
@@ -166,7 +198,13 @@ class HarmfulBehaviors(BaseDataset):
         """
         if data_path is None:
             self.data_path = os.path.join(os.path.dirname(__file__), "harmful_behaviors.csv")
+        else:
+            self.data_path = data_path
         self.pd = pd.read_csv(self.data_path)
+        if "goal_original" in self.pd.columns:
+            self.add_original_prompts = True
+        else:
+            self.add_original_prompts = False
 
     def __iter__(self) -> Iterable[DataSample]:
         """Lazily iterate over data samples from the harmful behaviors dataset.
@@ -175,11 +213,18 @@ class HarmfulBehaviors(BaseDataset):
             DataSample: Data samples with harmful prompts and metadata.
         """
         for index, row in self.pd.iterrows():
-            yield DataSample(
-                harmful_prompt=row["goal"],
-                target=row["target"],
-                metadata={"source": "harmful_behavior_gcg"},
-            )
+            try:
+                yield DataSample(
+                    original_harmful_prompt=row["goal_original"] if self.add_original_prompts else "",
+                    harmful_prompt=row["goal"],
+                    target=row["target"],
+                    metadata={"source": "harmful_behavior_gcg"},
+                )
+            except Exception as e:
+                logger.error(f"Error processing row {index}: {e}")
+                logger.error(f"original_harmful_prompt: {row['goal_original']}")
+                logger.error(f"harmful_prompt: {row['goal']}")
+                continue
 
     def name(self) -> str:
         return "harmful_behaviors_gcg"
@@ -197,11 +242,24 @@ class HarmfulBehaviors(BaseDataset):
             DataSample: The data sample at the specified index.
         """
         row = self.pd.iloc[index]
-        return DataSample(
-            harmful_prompt=row["goal"],
-            target=row["target"],
-            metadata={"source": "harmful_behavior_gcg"},
-        )
+        try:
+            one_sample = DataSample(
+                original_harmful_prompt=row["goal_original"] if self.add_original_prompts else "",
+                harmful_prompt=row["goal"],
+                target=row["target"],
+                metadata={"source": "harmful_behavior_gcg"},
+            )
+        except Exception as e:
+            logger.error(f"Error processing row {index}: {e}")
+            logger.error(f"original_harmful_prompt: {row['goal_original']}")
+            logger.error(f"harmful_prompt: {row['goal']}")
+            one_sample = DataSample(
+                original_harmful_prompt=row["goal_original"] if self.add_original_prompts else "",
+                harmful_prompt=row["goal_original"] if self.add_original_prompts else "",
+                target="",
+                metadata={"source": "harmful_behavior_gcg"},
+            )
+        return one_sample
 
     def apply_transformation(self, jailbreak_method: BaseMethod, stored_path: pathlib.Path, batch_size: int = 16):
         self.pd["goal_original"] = self.pd["goal"]
@@ -239,7 +297,13 @@ class HarmBench(BaseDataset):
 
         if data_path is None:
             self.data_path = os.path.join(os.path.dirname(__file__), "harmbench_behaviors_text_all.csv")
+        else:
+            self.data_path = data_path
         self.pd = pd.read_csv(self.data_path)
+        if "Behavior_original" in self.pd.columns:
+            self.add_original_prompts = True
+        else:
+            self.add_original_prompts = False
 
     def __iter__(self) -> Iterable[DataSample]:
         """Lazily iterate over data samples from the HarmBench dataset.
@@ -248,11 +312,18 @@ class HarmBench(BaseDataset):
             DataSample: Data samples with harmful prompts and metadata.
         """
         for index, row in self.pd.iterrows():
-            yield DataSample(
-                harmful_prompt=row["Behavior"],
-                target="",
-                metadata={"category": row["SemanticCategory"], "source": "harmbench"},
-            )
+            try:
+                yield DataSample(
+                    original_harmful_prompt=row["Behavior_original"] if self.add_original_prompts else "",
+                    harmful_prompt=row["Behavior"],
+                    target="",
+                    metadata={"category": row["SemanticCategory"], "source": "harmbench"},
+                )
+            except Exception as e:
+                logger.error(f"Error processing row {index}: {e}")
+                logger.error(f"original_harmful_prompt: {row['Behavior_original']}")
+                logger.error(f"harmful_prompt: {row['Behavior']}")
+                continue
 
     def __getitem__(self, index: int) -> DataSample:
         """Get a specific data sample by index.
@@ -264,11 +335,25 @@ class HarmBench(BaseDataset):
             DataSample: The data sample at the specified index.
         """
         row = self.pd.iloc[index]
-        return DataSample(
-            harmful_prompt=row["Behavior"],
-            target="",
-            metadata={"category": row["SemanticCategory"], "source": "harmbench"},
-        )
+        try:
+            one_sample = DataSample(
+                original_harmful_prompt=row["Behavior_original"] if self.add_original_prompts else "",
+                harmful_prompt=row["Behavior"],
+                target="",
+                metadata={"category": row["SemanticCategory"], "source": "harmbench"},
+            )
+        except Exception as e:
+            logger.error(f"Error processing row {index}: {e}")
+            logger.error(f"original_harmful_prompt: {row['Behavior_original']}")
+            logger.error(f"harmful_prompt: {row['Behavior']}")
+            one_sample = DataSample(
+                original_harmful_prompt=row["Behavior_original"] if self.add_original_prompts else "",
+                harmful_prompt=row["Behavior_original"] if self.add_original_prompts else "",
+                target="",
+                metadata={"category": "", "source": "harmbench"},
+            )
+
+        return one_sample
 
     def apply_transformation(self, jailbreak_method: BaseMethod, stored_path: pathlib.Path, batch_size: int = 16):
         self.pd["Behavior_original"] = self.pd["Behavior"]
@@ -303,10 +388,17 @@ class CatQA(BaseDataset):
         """Initialize the CatQA dataset by loading data from CSV."""
         if data_path is None:
             self.data_path = os.path.join(os.path.dirname(__file__), "catqa_english.json")
+        else:
+            self.data_path = data_path
         self.data_items = []
         with open(self.data_path, "r") as f:
             for line in f.readlines():
                 self.data_items.append(json.loads(line))
+
+        if "Question_original" in self.data_items[0]:
+            self.add_original_prompts = True
+        else:
+            self.add_original_prompts = False
 
 
     def name(self) -> str:
@@ -323,6 +415,7 @@ class CatQA(BaseDataset):
         """
         for item in self.data_items:
             yield DataSample(
+                original_harmful_prompt=item["Question_original"] if self.add_original_prompts else "",
                 harmful_prompt=item["Question"],
                 target="",
                 metadata={"category": item.get("Category", ""),
@@ -342,6 +435,7 @@ class CatQA(BaseDataset):
         """
         item = self.data_items[index]
         return DataSample(
+            original_harmful_prompt=item["Question_original"] if self.add_original_prompts else "",
             harmful_prompt=item["Question"],
             target="",
             metadata={"category": item.get("Category", ""),
@@ -378,7 +472,13 @@ class JBBHarmfulBehaviors(BaseDataset):
         """Initialize the JBB Behaviors dataset by loading data from CSV."""
         if data_path is None:
             self.data_path = os.path.join(os.path.dirname(__file__), "jbb-harmful-behaviors.csv")
+        else:
+            self.data_path = data_path
         self.pd = pd.read_csv(self.data_path)
+        if "Goal_original" in self.pd.columns:
+            self.add_original_prompts = True
+        else:
+            self.add_original_prompts = False
 
     def name(self) -> str:
         return "jbb_harmful_behaviors"
@@ -394,6 +494,7 @@ class JBBHarmfulBehaviors(BaseDataset):
         """
         for index, row in self.pd.iterrows():
             yield DataSample(
+                original_harmful_prompt=row["Goal_original"] if self.add_original_prompts else "",
                 harmful_prompt=row["Goal"],
                 target=row["Target"],
                 metadata={"category": row.get("Category", ""),
@@ -413,6 +514,7 @@ class JBBHarmfulBehaviors(BaseDataset):
         """
         row = self.pd.iloc[index]
         return DataSample(
+            original_harmful_prompt=row["Goal_original"] if self.add_original_prompts else "",
             harmful_prompt=row["Goal"],
             target=row["Target"],
             metadata={"category": row.get("Category", ""),
