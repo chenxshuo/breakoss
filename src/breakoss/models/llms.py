@@ -42,7 +42,7 @@ class LLMHF:
         self.tokenizer.padding_side = "left"
 
 
-    def chat(self, *, prompt: str, inference_config: InferenceConfig, system_prompt: str = None) -> str:
+    def chat(self, *, prompt: str, inference_config: InferenceConfig, system_prompt: str = None, apply_chat_template: bool = True) -> str:
         """Generate a chat response using the loaded model.
 
         Args:
@@ -53,12 +53,17 @@ class LLMHF:
             Generated text response from the model.
         """
         messages = [{"role": "user", "content": prompt}]
-        inputs = self.tokenizer.apply_chat_template(
-            messages,
-            add_generation_prompt=True,
-            return_tensors="pt",
-            return_dict=True,
-        ).to(self.model.device)
+        if apply_chat_template:
+            inputs = self.tokenizer.apply_chat_template(
+                messages,
+                add_generation_prompt=True,
+                return_tensors="pt",
+                return_dict=True,
+            ).to(self.model.device)
+        else:
+            inputs = self.tokenizer(
+                prompt, return_tensors="pt"
+            ).to(self.model.device)
 
         outputs = self.model.generate(
             **inputs,
