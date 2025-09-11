@@ -4,17 +4,18 @@ This module provides the core functionality for running jailbreaking experiments
 and evaluating the effectiveness of different attack methods against language models.
 It handles the complete pipeline from prompt transformation to response evaluation.
 """
+import torch
 
 from breakoss.models import LLMHF, InferenceConfig
 from breakoss.methods import BaseMethod
-from breakoss.evaluators import Evaluator, EvaluateResult
-from breakoss.datasets import DataSample, BaseDataset
+from breakoss.evaluators import Evaluator, EvaluateResult,  HarmBenchEvaluator, RefusalWordsEvaluator, LlamaGuardEvaluator, StrongREJECTEvaluator
+from breakoss.datasets import DataSample, BaseDataset, StrongReject
 from loguru import logger
 import os
 from pathlib import Path
 from tqdm import tqdm
 import json
-from .utils import get_exp_dir, set_seed
+from .utils import get_exp_dir, set_seed, free_gpu_memory
 from pydantic import BaseModel
 
 
@@ -72,6 +73,7 @@ def go_jailbreak(
     end_index: int = -1,
     seed: int = 42,
     log_base: Path | str = None,
+    metrics_name_to_failure_prompts: dict[str, list[str]] = None,
 ) -> ExperimentFullRecords:
     """Run a complete jailbreaking experiment.
 
@@ -131,6 +133,12 @@ def go_jailbreak(
         logger.critical(f"Debug mode is on, only process {debug_limit} samples.")
 
     record_list = []
+
+    if metrics_name_to_failure_prompts is not None:
+        union_failure_prompts = list(set().union(*metrics_name_to_failure_prompts.values()))
+        harmful_prompts = [p for p in harmful_prompts if p.original_harmful_prompt in union_failure_prompts]
+        logger.critical(f"Filtered harmful prompts to {len(harmful_prompts)} using provided failure cases.")
+
     for i in tqdm(
             range(0, len(harmful_prompts), batch_size),
             desc="Processing harmful prompts",
@@ -168,12 +176,16 @@ def go_jailbreak(
             responses = model.chat_batch(
                 prompts=jailbreak_prompts, inference_config=inference_config
             )
-        except Exception as e:
+        except torch.OutOfMemoryError as e:
             responses = []
             for one_prompt in jailbreak_prompts:
-                response = model.chat(
-                    prompt=one_prompt, inference_config=inference_config
-                )
+                try:
+                    response = model.chat(
+                        prompt=one_prompt, inference_config=inference_config
+                    )
+                except torch.OutOfMemoryError as error:
+                    logger.error(f"Single inference also failed with OOM {error}, skipping this sample.")
+                    response = "Error: OOM during inference."
                 responses.append(response)
             logger.warning(f"Batch inference failed with error {e}, fallback to single inference.")
 
@@ -182,6 +194,8 @@ def go_jailbreak(
             record_list.append(
                 ExperimentOneRecord(
                     datasample=DataSample(
+                        original_harmful_prompt=harmful_prompt_obj.original_harmful_prompt
+                        if isinstance(harmful_prompt_obj, DataSample) else "",
                         harmful_prompt=harmful_prompt,
                         target=(
                             ""
@@ -302,7 +316,10 @@ def go_evaluate(
         "source": records_path,
     }
     for i, record in enumerate(tqdm(record_list)):
-        harmful_prompt = record.datasample.harmful_prompt
+        if record.datasample.original_harmful_prompt != "":
+            harmful_prompt = record.datasample.original_harmful_prompt
+        else:
+            harmful_prompt = record.datasample.harmful_prompt
         response = record.evaluate_result.response
         result = evaluator.evaluate_one(
             harmful_prompt=harmful_prompt, response=response
@@ -362,3 +379,54 @@ def go_evaluate(
 
 
     return experiment_records
+
+def go_evaluate_on_all_metrics(
+    records_dir: str = "",
+):
+
+    json_path = os.path.join(records_dir, "records_before_evaluation.json")
+    assert os.path.exists(json_path), "Please provide the correct records_dir that contains records_before_evaluation.json"
+
+    refusal_words_evaluator = RefusalWordsEvaluator()
+    refusal_results = go_evaluate(
+        evaluator=refusal_words_evaluator,
+        records_path=json_path,
+        extract_failure_cases=True,
+    )
+
+    llama_guard_evaluator = LlamaGuardEvaluator()
+    llama_guard_results = go_evaluate(
+        evaluator=llama_guard_evaluator,
+        records_path=json_path,
+        extract_failure_cases=True,
+    )
+    free_gpu_memory(llama_guard_evaluator)
+
+    strong_reject_evaluator = StrongREJECTEvaluator()
+    strong_reject_results = go_evaluate(
+        evaluator=strong_reject_evaluator,
+        records_path=json_path,
+        extract_failure_cases=True,
+    )
+    free_gpu_memory(strong_reject_evaluator)
+
+
+    harm_bench_evaluator = HarmBenchEvaluator()
+    harm_bench_results = go_evaluate(
+        evaluator=harm_bench_evaluator,
+        records_path=json_path,
+        extract_failure_cases=True,
+    )
+    free_gpu_memory(harm_bench_evaluator)
+
+    logger.info(f"RefusalWordsEvaluator ASR: {refusal_results.asr}")
+    logger.info(f"LlamaGuardEvaluator ASR: {llama_guard_results.asr}")
+    logger.info(f"HarmBenchEvaluator ASR: {harm_bench_results.asr}")
+    logger.info(f"StrongREJECTEvaluator ASR: {strong_reject_results.asr} and Score {strong_reject_results.harmful_scores}")
+
+    return {
+        "RefusalWordsEvaluator": refusal_results,
+        "LlamaGuardEvaluator": llama_guard_results,
+        "HarmBenchEvaluator": harm_bench_results,
+        "StrongREJECTEvaluator": strong_reject_results,
+    }

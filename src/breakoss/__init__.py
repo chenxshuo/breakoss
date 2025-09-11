@@ -1,7 +1,7 @@
 """A research toolkit providing a bag of techniques to jailbreak OpenAI's open-source models."""
 
 from .api import hello, square
-from .go_jailbreak import go_jailbreak, go_evaluate
+from .go_jailbreak import go_jailbreak, go_evaluate, go_evaluate_on_all_metrics
 from .datasets import (
     DataSample,
     StrongReject,
@@ -18,6 +18,7 @@ __all__ = [
     "square",
     "go_jailbreak",
     "go_evaluate",
+    "go_evaluate_on_all_metrics",
     "DataSample",
     "StrongReject",
     "HarmfulBehaviors",
