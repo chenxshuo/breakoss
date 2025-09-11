@@ -1,5 +1,9 @@
 import fire
 import json
+from dotenv import load_dotenv
+import os
+load_dotenv()
+OPEN_ROUTER_KEY = os.getenv("OPEN_ROUTER_KEY")
 # client = OpenAI(
 #   base_url="https://openrouter.ai/api/v1",
 #   api_key=OPEN_ROUTER_KEY,
@@ -32,7 +36,7 @@ import json
 def openai_api():
     from openai import OpenAI
     client = OpenAI(
-        api_key="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"
+        api_key=OPEN_ROUTER_KEY,
     )
     completion = client.completions.create(
         model="gpt-oss-20b",
@@ -58,7 +62,7 @@ def openrouter():
     response_completions = requests.post(
       "https://openrouter.ai/api/v1/completions",
       headers={
-        "Authorization": "Bearer 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"
+        "Authorization": f"Bearer {OPEN_ROUTER_KEY}",
       },
       json={
         "model": "openai/gpt-oss-120b",
@@ -81,7 +85,7 @@ def openrouter():
     response_chat = requests.post(
         url="https://openrouter.ai/api/v1/chat/completions",
         headers={
-            "Authorization": "Bearer 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",
+            "Authorization": f"Bearer {OPEN_ROUTER_KEY}",
             "Content-Type": "application/json",
         },
         data=json.dumps({
