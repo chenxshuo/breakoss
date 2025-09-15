@@ -164,7 +164,7 @@ def transform_original_prompts(
     else:
         raise ValueError(f"Unknown dataset name: {dataset_name}")
 
-    plan_injection = PlanInjection(target_model_name=target_model_name)
+    plan_injection = PlanInjection(target_model_name=target_model_name, transformed_already=False)
     logger.info(
         f"Transforming {len(dataset)} prompts from {dataset_name} using FakeOverrefusal method."
     )
@@ -596,10 +596,10 @@ def main_inference(
         )
     else:
         raise ValueError(f"Unknown dataset name: {dataset_name}")
-
+    method = PlanInjection(target_model_name=model_name, transformed_already=True)
     exp = go_jailbreak(
         model=model,
-        method=None,
+        method=method,
         evaluator=judge,
         harmful_prompts=dataset,
         inference_config=inference_config,
@@ -607,6 +607,7 @@ def main_inference(
         starting_index=starting_index,
         end_index=end_index,
         seed=seed,
+        apply_chat_template=True
     )
 
     free_gpu_memory(model)
