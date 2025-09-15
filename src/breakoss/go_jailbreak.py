@@ -74,6 +74,7 @@ def go_jailbreak(
     seed: int = 42,
     log_base: Path | str = None,
     metrics_name_to_failure_prompts: dict[str, list[str]] = None,
+    apply_chat_template: bool = True,
 ) -> ExperimentFullRecords:
     """Run a complete jailbreaking experiment.
 
@@ -174,7 +175,7 @@ def go_jailbreak(
 
         try:
             responses = model.chat_batch(
-                prompts=jailbreak_prompts, inference_config=inference_config
+                prompts=jailbreak_prompts, inference_config=inference_config, apply_chat_template=apply_chat_template
             )
         except torch.OutOfMemoryError as e:
             responses = []
@@ -189,7 +190,7 @@ def go_jailbreak(
                 responses.append(response)
             logger.warning(f"Batch inference failed with error {e}, fallback to single inference.")
 
-        for harmful_prompt, harmful_prompt_obj, response in zip(harmful_prompts_input, harmful_prompt_objs, responses):
+        for harmful_prompt, harmful_prompt_obj, response in zip(jailbreak_prompts, harmful_prompt_objs, responses):
             logger.info(f"Model Response: {response}")
             record_list.append(
                 ExperimentOneRecord(
