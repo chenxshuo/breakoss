@@ -224,7 +224,7 @@ Fake Overrefusal Query:"""
                 pad_token_id=self.tokenizer.pad_token_id,
             )
         rephrased_questions = []
-        for i, output in enumerate(harmful_prompts):
+        for i, output in enumerate(outputs):
             response_text = self.tokenizer.decode(
                 outputs[i][inputs["input_ids"].shape[1] :], skip_special_tokens=True
             )

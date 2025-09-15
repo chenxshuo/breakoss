@@ -16,6 +16,9 @@ class BaseMethod(ABC):
     safety mechanisms while maintaining the core intent of the original prompt.
     """
 
+    def __init__(self, target_model_name: str = "openai/gpt-oss-20b"):
+        self.target_model_name = target_model_name
+
     @abstractmethod
     def jailbreak_transform(self, harmful_prompt: str) -> str:
         """Transform a harmful prompt to attempt bypassing safety mechanisms.

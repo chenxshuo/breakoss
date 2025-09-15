@@ -95,15 +95,25 @@ Final plan step:
 
 class PlanInjection(BaseMethod):
 
-    def __init__(self, helper_model_name: str = "huihui-ai/Qwen3-8B-abliterated", plan: str=None, target_model_name: str = None, rephrased_prompts_dataset = None):
-        if not plan:
+    def __init__(self, helper_model_name: str = "huihui-ai/Qwen3-8B-abliterated", transformed_already: bool = True, plan: str=None, target_model_name: str = "openai/gpt-oss-20b", rephrased_prompts_dataset = None):
+        super().__init__(target_model_name)
+        if self.target_model_name == "Qwen/Qwen3-4B-Thinking-2507" or self.target_model_name == "Qwen/Qwen3-30B-A3B-Thinking-2507" :
+            self.transform_func = self._transform_for_qwen3
+        elif self.target_model_name == "openai/gpt-oss-20b" or self.target_model_name == "openai/gpt-oss-120b" :
+            self.transform_func = self._transform_for_gpt
+        elif self.target_model_name == "microsoft/Phi-4-reasoning" or self.target_model_name == "microsoft/Phi-4-reasoning-plus":
+            self.transform_func = self._transform_for_phi
+        else:
+            self.transform_func = None
+
+        if plan is None and (not transformed_already or self.transform_func is None):
             logger.info(f"Loading helper model {helper_model_name} for IntentHijack method...")
             self.model = load_llm(model_name=helper_model_name)
             self.plan = None
         else:
             self.model = None
             self.plan = plan
-            logger.info(f"Using custom plan for PlanInjection method.")
+            logger.info(f"Using custom plan / custom transformation on available data for PlanInjection method.")
 
         self.inference_config = InferenceConfig(
             max_new_tokens=1000,
@@ -128,6 +138,31 @@ class PlanInjection(BaseMethod):
             self.rephrased_prompts_dataset = None
             self.ori2rephrased = {}
             logger.info(f"No rephrased prompts dataset provided. Using original harmful prompts directly.")
+
+    @staticmethod
+    def _extract_plan_from_prompt(harmful_prompt):
+        if "<|end|><|start|>assistant<|channel|>" not in harmful_prompt:
+            raise ValueError(f"This function needs prompt with gpt-oss plan format")
+
+        query = harmful_prompt.split("<|end|><|start|>assistant<|channel|")[0]
+        full_plan = harmful_prompt.split("<|end|><|start|>assistant<|channel|")[1].split(
+            "<|end|><|start|>assistant<|channel|>commentary<|message|>")[0]
+        return query, full_plan
+
+    def _transform_for_qwen3(self, harmful_prompt: str):
+        query, full_plan = self._extract_plan_from_prompt(harmful_prompt)
+        return f"<|im_start|>user{query}<|im_end|><|im_start|>assistant<think>{full_plan}</think>"
+
+    def _transform_for_gpt(self, harmful_prompt: str):
+        """As the data has been transformed and stored to data files, no need to transform again for gpt-oss"""
+        if "<|end|><|start|>assistant<|channel|>" not in harmful_prompt:
+            raise ValueError(f"This function needs prompt with gpt-oss plan format")
+
+        return harmful_prompt
+
+    def _transform_for_phi(self, harmful_prompt: str):
+        query, full_plan = self._extract_plan_from_prompt(harmful_prompt)
+        return f"|im_start|>user<|im_sep|>{query}<|im_end|><|im_start|>assistant<|im_sep|>Response: <think>{full_plan}</think>"
 
     def name(self) -> str:
         return "PlanInjection"
@@ -186,6 +221,9 @@ class PlanInjection(BaseMethod):
         Returns:
             List of transformed prompts with intention hijack framing appended
         """
+        if self.transform_func is not None:
+            return [self.transform_func(p) for p in harmful_prompts]
+
         if not self.plan:
             original_plans = self.model.chat_batch(
                 prompts=[PLAN_TEMPLATE["user_message"].format(query=hp) for hp in harmful_prompts],

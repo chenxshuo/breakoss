@@ -10,5 +10,9 @@ from .fake_overrefusal import FakeOverrefusal
 from .intention_hijack import IntentHijack
 from .plan_injection import PlanInjection
 from .nanogcg import GCGConfig, ProbeSamplingConfig, run_batch
+from .mousetrap import MouseTrap
+from .autoran import AutoRAN
+from .hcot import HCoT
+from .policy_puppetry import PolicyPuppetry
 
-__all__ = ["CoTBypass", "BaseMethod", "FakeOverrefusal", "IntentHijack", "PlanInjection", "GCGConfig", "ProbeSamplingConfig", "run_batch"]
+__all__ = ["CoTBypass", "BaseMethod", "FakeOverrefusal", "IntentHijack", "PlanInjection", "GCGConfig", "ProbeSamplingConfig", "run_batch", "MouseTrap", "AutoRAN", "HCoT", "PolicyPuppetry"]
