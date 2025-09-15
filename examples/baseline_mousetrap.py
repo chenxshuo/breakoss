@@ -96,6 +96,79 @@ def main_inference(
     logger.info(f"Records are saved in {record_dir}")
     go_evaluate_on_all_metrics(record_dir)
 
+def main_eval(record_dir):
+    go_evaluate_on_all_metrics(record_dir)
+
+
+def re_eval_answer_match(
+        record_dir: str
+):
+    from breakoss.go_jailbreak import ExperimentOneRecord
+    from tqdm import tqdm
+    from breakoss.evaluators import AnswerRelatedEvaluator
+    evaluator = AnswerRelatedEvaluator()
+    bs = 16
+    full_results_related = {}
+    def helper(records_evaluation_path):
+        # records_evaluation_path = os.path.join(record_dir, "re_evaluation_records_before_evaluation/records_after_reevaluation_by_LlamaGuardEvaluator.json")
+        original_evaluator = records_evaluation_path.split("/")[-1]
+        assert os.path.exists(records_evaluation_path), f"Records file {records_evaluation_path} does not exist."
+        with open(records_evaluation_path, "r") as f:
+            records_json = f.read()
+        records_data = json.loads(records_json)
+        record_list = [
+            ExperimentOneRecord.model_validate(record) for record in records_data
+        ]
+        if "StrongREJECTEvaluator" in records_evaluation_path:
+            re_eval_score = True
+        else:
+            re_eval_score = False
+        indeed_harmful = 0
+        total_score = 0
+        if len(full_results_related.keys()) > 0:
+            for one_record in record_list:
+                is_harmful = one_record.evaluate_result.is_harmful
+                is_related = full_results_related.get(one_record.datasample.original_harmful_prompt)
+                one_record.evaluate_result.is_related = is_related
+                if is_related and is_harmful:
+                    indeed_harmful += 1
+                    total_score += one_record.evaluate_result.harmful_score
+        else:
+            for i in tqdm(range(0, len(record_list), bs)):
+                records_batch = record_list[i : i + bs]
+                original_harmful_prompts = [item.datasample.original_harmful_prompt for item in records_batch]
+                responses = [item.evaluate_result.response for item in records_batch]
+                eval_feedbacks = evaluator.evaluate_batch(
+                    harmful_prompts=original_harmful_prompts,
+                    responses=responses,
+                )
+                for one_feedback, one_record in zip(eval_feedbacks, records_batch):
+                    is_related = one_feedback.is_related
+                    one_record.evaluate_result.is_related = is_related
+                    is_harmful = one_record.evaluate_result.is_harmful
+                    if is_related and is_harmful:
+                        indeed_harmful += 1
+                        total_score += one_record.evaluate_result.harmful_score
+                    full_results_related[one_record.datasample.original_harmful_prompt] = is_related
+
+        if re_eval_score:
+            logger.info(f"Re-evaluation score: {total_score}/{len(record_list)}")
+        with open(records_evaluation_path, "w") as f:
+            f.write(
+                json.dumps([record.model_dump() for record in record_list], indent=4)
+            )
+
+        logger.info(f"Indeed harmful ASR of Evaluator {original_evaluator}: {indeed_harmful / len(record_list)}")
+
+    evaluators_name = [
+        "RefusalWordsEvaluator",
+        "LlamaGuardEvaluator",
+        "HarmBenchEvaluator",
+        "StrongREJECTEvaluator",
+    ]
+    records_paths = [os.path.join(record_dir, "records_after_reevaluation_by_" + evaluator_name + ".json") for evaluator_name in evaluators_name]
+    for records_path in tqdm(records_paths):
+        helper(records_path)
 
 
 if __name__ == "__main__":
