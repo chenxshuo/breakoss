@@ -52,6 +52,7 @@ def main_inference(
         model=model, method=None, evaluator=judge, harmful_prompts=dataset, inference_config=inference_config,
         starting_index=starting_index, end_index=end_index, seed=seed
     )
+    main_evals(exp.log_dir)
 
 
 def main_evals(
