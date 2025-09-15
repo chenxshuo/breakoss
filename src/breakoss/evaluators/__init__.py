@@ -5,6 +5,7 @@ from .evaluators import (
     HarmBenchEvaluator,
     Evaluator,
     EvaluateResult,
+    AnswerRelatedEvaluator,
 )
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "HarmBenchEvaluator",
     "Evaluator",
     "EvaluateResult",
+    "AnswerRelatedEvaluator",
 ]
