@@ -99,10 +99,12 @@ class PlanInjection(BaseMethod):
         super().__init__(target_model_name)
         if self.target_model_name == "Qwen/Qwen3-4B-Thinking-2507" or self.target_model_name == "Qwen/Qwen3-30B-A3B-Thinking-2507" :
             self.transform_func = self._transform_for_qwen3
-        elif self.target_model_name == "openai/gpt-oss-20b" or self.target_model_name == "openai/gpt-oss-120b" :
+        elif self.target_model_name == "openai/gpt-oss-20b" or self.target_model_name == "openai/gpt-oss-120b" or self.target_model_name == "openai/gpt-oss-20b:free":
             self.transform_func = self._transform_for_gpt
         elif self.target_model_name == "microsoft/Phi-4-reasoning" or self.target_model_name == "microsoft/Phi-4-reasoning-plus":
             self.transform_func = self._transform_for_phi
+        elif self.target_model_name == "deepseek-ai/DeepSeek-R1-Distill-Llama-8B":
+            self.transform_func = self._transform_for_deepseek_llama
         else:
             self.transform_func = None
 
@@ -163,6 +165,11 @@ class PlanInjection(BaseMethod):
     def _transform_for_phi(self, harmful_prompt: str):
         query, full_plan = self._extract_plan_from_prompt(harmful_prompt)
         return f"|im_start|>user<|im_sep|>{query}<|im_end|><|im_start|>assistant<|im_sep|>Response: <think>{full_plan}</think>"
+
+    def _transform_for_deepseek_llama(self, harmful_prompt: str):
+        query, full_plan = self._extract_plan_from_prompt(harmful_prompt)
+        return f" <｜begin▁of▁sentence｜><｜User｜>{harmful_prompt}<｜Assistant｜><think>{full_plan}</think>"
+
 
     def name(self) -> str:
         return "PlanInjection"
