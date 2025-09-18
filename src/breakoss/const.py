@@ -1,9 +1,11 @@
 SUPPORTED_MODELS = [
     "openai/gpt-oss-20b",
+    "openai/gpt-oss-20b:free",
     "openai/gpt-oss-120b",
     "microsoft/Phi-4-reasoning-plus",
     "Qwen/Qwen3-4B-Thinking-2507",
     "Qwen/Qwen3-30B-A3B-Thinking-2507",
+    "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
 
     # "RealSafe/RealSafe-R1-7B"
 ]
