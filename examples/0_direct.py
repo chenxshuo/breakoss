@@ -21,6 +21,7 @@ def main_inference(
     starting_index: int = 0,
     end_index: int = -1,
     seed: int = 42,
+    batch_size: int = 16,
 ):
     """Only inference to collect the output, eval will be done separately"""
     assert model_name in SUPPORTED_MODELS, f"Model {model_name} is not supported. Supported models are: {SUPPORTED_MODELS}"
@@ -50,7 +51,7 @@ def main_inference(
 
     exp = go_jailbreak(
         model=model, method=None, evaluator=judge, harmful_prompts=dataset, inference_config=inference_config,
-        starting_index=starting_index, end_index=end_index, seed=seed
+        starting_index=starting_index, end_index=end_index, seed=seed, batch_size=batch_size
     )
     main_evals(exp.log_dir)
 
