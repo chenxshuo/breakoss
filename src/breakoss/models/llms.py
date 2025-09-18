@@ -7,7 +7,8 @@ from pydantic import BaseModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from typing import Literal
 from loguru import logger
-
+import os
+from .openrouter import LLMOpenRouter
 
 class InferenceConfig(BaseModel):
     """Configuration for LLM text generation inference."""
@@ -132,7 +133,7 @@ def load_llm(
     *,
     model_name: str,
     cuda_device: str = "auto",
-    provider: Literal["hf", "vllm"] = "hf",
+    provider: Literal["hf", "vllm", "openrouter"] = "hf",
 ):
     """Load a language model with the specified provider.
 
@@ -154,5 +155,13 @@ def load_llm(
         )
     elif provider == "vllm":
         raise NotImplementedError("VLLM provider is not implemented yet.")
+    elif provider.lower() == "openrouter":
+        return LLMOpenRouter(
+            model_name=model_name
+        )
     else:
         raise ValueError(f"Unknown provider: {provider}")
+
+
+class Translator():
+    ...
