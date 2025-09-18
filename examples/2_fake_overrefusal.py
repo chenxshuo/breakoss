@@ -14,7 +14,8 @@ import gc
 import os
 import torch
 from loguru import logger
-
+from dotenv import load_dotenv
+load_dotenv()
 def one_example():
 
     # Below is one example that can not attack gpt-oss successfully by cot_bypass
@@ -48,14 +49,16 @@ def main_inference(
     batch_size: int = 4,
     seed: int = 42,
     failure_cases_dir: pathlib.Path | str = None,
+    apply_chat_template: bool = True,
+    provider: Literal['hf', 'openrouter'] = "hf",
 ):
     """
     Load Transformed prompts from FakeOverrefusal method and run inference + CoTBypass Method.
     """
     assert model_name in SUPPORTED_MODELS, f"Model {model_name} is not supported. Supported models are: {SUPPORTED_MODELS}"
-    model = load_llm(model_name=model_name, cuda_device="auto", provider="hf")
+    model = load_llm(model_name=model_name, cuda_device="auto", provider=provider)
     judge = None
-    cot_bypass = CoTBypass()
+    cot_bypass = CoTBypass(target_model_name=model_name)
     inference_config = InferenceConfig(
         max_new_tokens=1000,
         temperature=0.0,
@@ -110,8 +113,15 @@ def main_inference(
             model=model, method=cot_bypass, evaluator=judge,
             harmful_prompts=dataset, inference_config=inference_config,
             batch_size=batch_size,
-            starting_index=starting_index, end_index=end_index, seed=seed
+            starting_index=starting_index, end_index=end_index, seed=seed,
+            apply_chat_template=apply_chat_template,
         )
+
+    if provider == "openrouter":
+        total_input_tokens = model.total_input_tokens
+        total_output_tokens = model.total_output_tokens
+    else:
+        total_input_tokens = total_output_tokens = None
 
     free_gpu_memory(model)
     record_dir = exp.log_dir
@@ -149,6 +159,13 @@ def main_inference(
     )
     logger.info(f"Success count w.r.t. StrongREJECTEvaluator is {success_count}")
     logger.info(f"Total ASR increased by +{success_count / len(dataset) * 100:.2f}%.")
+
+
+    if total_input_tokens is not None:
+        logger.critical(f"Total input tokens: {total_input_tokens}")
+        logger.critical(f"Total output tokens: {total_output_tokens}")
+
+
 
 
 def count_success_on_failures(

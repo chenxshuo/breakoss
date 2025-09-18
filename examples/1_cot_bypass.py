@@ -10,6 +10,8 @@ from breakoss.datasets import StrongReject, HarmfulBehaviors, HarmBench, CatQA, 
 from breakoss.const import  SUPPORTED_MODELS, SUPPORTED_DATASETS, SUPPORTED_METRICS
 from breakoss.utils import free_gpu_memory
 from loguru import logger
+from dotenv import load_dotenv
+load_dotenv()
 
 
 def one_example():
@@ -153,12 +155,14 @@ def main_inference(
     end_index: int = -1,
     batch_size: int = 4,
     seed: int = 42,
+    apply_chat_template: bool = True,
+    provider: Literal['hf', 'openrouter'] = "hf",
 ):
     """Only inference to collect the output, eval will be done separately"""
     assert model_name in SUPPORTED_MODELS, f"Model {model_name} is not supported. Supported models are: {SUPPORTED_MODELS}"
-    model = load_llm(model_name=model_name, cuda_device="auto", provider="hf")
+    model = load_llm(model_name=model_name, cuda_device="auto", provider=provider)
     judge = None
-    cot_bypass = CoTBypass()
+    cot_bypass = CoTBypass(target_model_name=model_name)
     inference_config = InferenceConfig(
         max_new_tokens=1000,
         temperature=0.0,
@@ -183,13 +187,22 @@ def main_inference(
     exp = go_jailbreak(
         model=model, method=cot_bypass, evaluator=judge, harmful_prompts=dataset, inference_config=inference_config,
         batch_size=batch_size,
-        starting_index=starting_index, end_index=end_index, seed=seed
+        starting_index=starting_index, end_index=end_index, seed=seed, apply_chat_template=apply_chat_template,
     )
 
+    if provider == "openrouter":
+        total_input_tokens = model.total_input_tokens
+        total_output_tokens = model.total_output_tokens
+    else:
+        total_input_tokens = total_output_tokens = None
     free_gpu_memory(model)
     record_dir = exp.log_dir
     logger.info(f"Records are saved in {record_dir}")
     main_evals(record_dir)
+
+    if total_input_tokens is not None:
+        logger.critical(f"Total input tokens: {total_input_tokens}")
+        logger.critical(f"Total output tokens: {total_output_tokens}")
 
 
 def main_evals(
