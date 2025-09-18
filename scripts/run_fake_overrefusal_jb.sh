@@ -73,30 +73,148 @@
 #done
 #echo "finished on HarmBench"
 
+#pids=()
+#CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python examples/2_fake_overrefusal.py main_inference \
+#  --dataset_name=CatQA \
+#  --batch_size=4 \
+#  --model_name=openai/gpt-oss-120b \
+#  --failure_cases_dir=breakoss_logs/openai_gpt-oss-120b/catqa_[0_-1]/CoTBypass/pure_inference_no_eval/seed_42/2025-09-07_06-18-18/ > logs_bash/fake_overrefusal_and_cot_bypass-gpt-oss-120b-CatQA.log 2>&1 &
+#pids+=($!)
+#for pid in "${pids[@]}"; do
+#    wait $pid
+#done
+#echo "finished on CatQA"
+#
+#pids=()
+#CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python examples/2_fake_overrefusal.py main_inference \
+#  --dataset_name=JBBHarmfulBehaviors \
+#  --batch_size=4 \
+#  --model_name=openai/gpt-oss-120b \
+#  --failure_cases_dir=breakoss_logs/openai_gpt-oss-120b/jbb_harmful_behaviors_[0_-1]/CoTBypass/pure_inference_no_eval/seed_42/2025-09-07_09-57-00 > logs_bash/fake_overrefusal_and_cot_bypass-gpt-oss-120b-JBBHarmfulBehaviors.log 2>&1 &
+#pids+=($!)
+#for pid in "${pids[@]}"; do
+#    wait $pid
+#done
+#echo "finished on JBBHarmfulBehaviors"
+
 pids=()
-CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python examples/2_fake_overrefusal.py main_inference \
+CUDA_VISIBLE_DEVICES=0 nohup python examples/2_fake_overrefusal.py main_inference \
+  --dataset_name=StrongReject \
+  --batch_size=16 \
+  --model_name=microsoft/Phi-4-reasoning-plus \
+  --apply_chat_template=False > logs_bash/fake_overrefusal_and_cot_bypass-phi-4-reasnoning-plus-StrongReject.log 2>&1 &
+pids+=($!)
+CUDA_VISIBLE_DEVICES=1 nohup python examples/2_fake_overrefusal.py main_inference \
+  --dataset_name=HarmfulBehaviors \
+  --batch_size=16 \
+  --model_name=microsoft/Phi-4-reasoning-plus \
+  --apply_chat_template=False > logs_bash/fake_overrefusal_and_cot_bypass-phi-4-reasnoning-plus-HarmfulBehaviors.log 2>&1 &
+pids+=($!)
+CUDA_VISIBLE_DEVICES=2 nohup python examples/2_fake_overrefusal.py main_inference \
+  --dataset_name=HarmBench \
+  --batch_size=16 \
+  --model_name=microsoft/Phi-4-reasoning-plus \
+  --apply_chat_template=False > logs_bash/fake_overrefusal_and_cot_bypass-phi-4-reasnoning-plus-HarmBench.log 2>&1 &
+pids+=($!)
+CUDA_VISIBLE_DEVICES=3 nohup python examples/2_fake_overrefusal.py main_inference \
   --dataset_name=CatQA \
-  --batch_size=4 \
-  --model_name=openai/gpt-oss-120b \
-  --failure_cases_dir=breakoss_logs/openai_gpt-oss-120b/catqa_[0_-1]/CoTBypass/pure_inference_no_eval/seed_42/2025-09-07_06-18-18/ > logs_bash/fake_overrefusal_and_cot_bypass-gpt-oss-120b-CatQA.log 2>&1 &
+  --batch_size=16 \
+  --model_name=microsoft/Phi-4-reasoning-plus \
+  --apply_chat_template=False > logs_bash/fake_overrefusal_and_cot_bypass-phi-4-reasnoning-plus-CatQA.log 2>&1 &
 pids+=($!)
-for pid in "${pids[@]}"; do
-    wait $pid
+for ((i=${#pids[@]}; i>0; i--)) ; do
+    wait -n
 done
-echo "finished on CatQA"
 
 pids=()
-CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python examples/2_fake_overrefusal.py main_inference \
+CUDA_VISIBLE_DEVICES=0 nohup python examples/2_fake_overrefusal.py main_inference \
   --dataset_name=JBBHarmfulBehaviors \
-  --batch_size=4 \
-  --model_name=openai/gpt-oss-120b \
-  --failure_cases_dir=breakoss_logs/openai_gpt-oss-120b/jbb_harmful_behaviors_[0_-1]/CoTBypass/pure_inference_no_eval/seed_42/2025-09-07_09-57-00 > logs_bash/fake_overrefusal_and_cot_bypass-gpt-oss-120b-JBBHarmfulBehaviors.log 2>&1 &
+  --batch_size=16 \
+  --model_name=microsoft/Phi-4-reasoning-plus \
+  --apply_chat_template=False > logs_bash/fake_overrefusal_and_cot_bypass-phi-4-reasnoning-plus-JBBHarmfulBehaviors.log 2>&1 &
+
+
+
+#
+#CUDA_VISIBLE_DEVICES=0 python examples/2_fake_overrefusal.py main_inference \
+#  --dataset_name=StrongReject \
+#  --batch_size=4 \
+#  --model_name=Qwen/Qwen3-4B-Thinking-2507 \
+#  --apply_chat_template=False
+
+
 pids+=($!)
-for pid in "${pids[@]}"; do
-    wait $pid
+CUDA_VISIBLE_DEVICES=1 nohup python examples/2_fake_overrefusal.py main_inference \
+  --dataset_name=StrongReject \
+  --batch_size=16 \
+  --model_name=Qwen/Qwen3-4B-Thinking-2507 \
+  --apply_chat_template=False > logs_bash/fake_overrefusal_and_cot_bypass-Qwen3-4B-Thinking-2507-StrongReject.log 2>&1 &
+pids+=($!)
+CUDA_VISIBLE_DEVICES=2 nohup python examples/2_fake_overrefusal.py main_inference \
+  --dataset_name=HarmfulBehaviors \
+  --batch_size=16 \
+  --model_name=Qwen/Qwen3-4B-Thinking-2507 \
+  --apply_chat_template=False > logs_bash/fake_overrefusal_and_cot_bypass-Qwen3-4B-Thinking-2507-HarmfulBehaviors.log 2>&1 &
+pids+=($!)
+CUDA_VISIBLE_DEVICES=3 nohup python examples/2_fake_overrefusal.py main_inference \
+  --dataset_name=HarmBench \
+  --batch_size=16 \
+  --model_name=Qwen/Qwen3-4B-Thinking-2507 \
+  --apply_chat_template=False > logs_bash/fake_overrefusal_and_cot_bypass-Qwen3-4B-Thinking-2507-HarmBench.log 2>&1 &
+pids+=($!)
+for ((i=${#pids[@]}; i>0; i--)) ; do
+    wait -n
 done
-echo "finished on JBBHarmfulBehaviors"
 
 
+CUDA_VISIBLE_DEVICES=0 nohup python examples/2_fake_overrefusal.py main_inference \
+  --dataset_name=CatQA \
+  --batch_size=16 \
+  --model_name=Qwen/Qwen3-4B-Thinking-2507 \
+  --apply_chat_template=False > logs_bash/fake_overrefusal_and_cot_bypass-Qwen3-4B-Thinking-2507-CatQA.log 2>&1 &
+
+CUDA_VISIBLE_DEVICES=1 nohup python examples/2_fake_overrefusal.py main_inference \
+  --dataset_name=JBBHarmfulBehaviors \
+  --batch_size=16 \
+  --model_name=Qwen/Qwen3-4B-Thinking-2507 \
+  --apply_chat_template=False > logs_bash/fake_overrefusal_and_cot_bypass-Qwen3-4B-Thinking-2507-JBBHarmfulBehaviors.log 2>&1 &
+
+
+
+CUDA_VISIBLE_DEVICES=0 python examples/2_fake_overrefusal.py main_inference \
+  --dataset_name=StrongReject \
+  --batch_size=4 \
+  --model_name=deepseek-ai/DeepSeek-R1-Distill-Llama-8B \
+  --apply_chat_template=False
+
+CUDA_VISIBLE_DEVICES=0 nohup python examples/2_fake_overrefusal.py main_inference \
+  --dataset_name=StrongReject \
+  --batch_size=16 \
+  --model_name=deepseek-ai/DeepSeek-R1-Distill-Llama-8B \
+  --apply_chat_template=False > logs_bash/fake_overrefusal_and_cot_bypass-DeepSeek-R1-Distill-Llama-8B-StrongReject.log 2>&1 &
+
+CUDA_VISIBLE_DEVICES=0 nohup python examples/2_fake_overrefusal.py main_inference \
+  --dataset_name=HarmfulBehaviors \
+  --batch_size=16 \
+  --model_name=deepseek-ai/DeepSeek-R1-Distill-Llama-8B \
+  --apply_chat_template=False > logs_bash/fake_overrefusal_and_cot_bypass-DeepSeek-R1-Distill-Llama-8B-HarmfulBehaviors.log 2>&1 &
+
+CUDA_VISIBLE_DEVICES=0 nohup python examples/2_fake_overrefusal.py main_inference \
+  --dataset_name=HarmBench \
+  --batch_size=16 \
+  --model_name=deepseek-ai/DeepSeek-R1-Distill-Llama-8B \
+  --apply_chat_template=False > logs_bash/fake_overrefusal_and_cot_bypass-DeepSeek-R1-Distill-Llama-8B-HarmBench.log 2>&1 &
+
+CUDA_VISIBLE_DEVICES=0 nohup python examples/2_fake_overrefusal.py main_inference \
+  --dataset_name=CatQA \
+  --batch_size=16 \
+  --model_name=deepseek-ai/DeepSeek-R1-Distill-Llama-8B \
+  --apply_chat_template=False > logs_bash/fake_overrefusal_and_cot_bypass-DeepSeek-R1-Distill-Llama-8B-CatQA.log 2>&1 &
+
+CUDA_VISIBLE_DEVICES=0 nohup python examples/2_fake_overrefusal.py main_inference \
+  --dataset_name=JBBHarmfulBehaviors \
+  --batch_size=16 \
+  --model_name=deepseek-ai/DeepSeek-R1-Distill-Llama-8B \
+  --apply_chat_template=False > logs_bash/fake_overrefusal_and_cot_bypass-DeepSeek-R1-Distill-Llama-8B-JBBHarmfulBehaviors.log 2>&1 &
 
 

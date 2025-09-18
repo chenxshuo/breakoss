@@ -132,6 +132,8 @@ done
 echo "finished on StrongReject"
 
 
+#### HESSIAN STOPS HERE
+
 pids=()
 CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python examples/5_plan_injection.py main_inference \
   --dataset_name=HarmfulBehaviors \
