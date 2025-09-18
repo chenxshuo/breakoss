@@ -7,6 +7,8 @@ import functools
 import gc
 import inspect
 import numpy as np
+from pathlib import Path
+import json
 
 from dataclasses import dataclass
 from tqdm import tqdm
@@ -18,6 +20,7 @@ from torch import Tensor
 from transformers import set_seed
 from scipy.stats import spearmanr
 from transformers import PreTrainedTokenizerBase
+from dataclasses import dataclass, asdict
 
 INIT_CHARS = [
     ".", ",", "!", "?", ";", ":", "(", ")", "[", "]", "{", "}",
@@ -192,6 +195,11 @@ class GCGResult:
     losses: List[float]
     strings: List[str]
 
+@dataclass
+class SampleIntermediateResult:
+    query: str
+    all_strings_to_losses: dict[str, float]
+
 
 @dataclass
 class BatchGCGResult:
@@ -199,6 +207,9 @@ class BatchGCGResult:
     best_strings: List[str]   # Best string for each target
     all_losses: List[List[float]]  # All losses for each target
     all_strings: List[List[str]]   # All strings for each target
+    intermediate_results: List[SampleIntermediateResult]
+
+
 
 
 class AttackBuffer:
@@ -349,6 +360,7 @@ class BatchGCG:
         self,
         messages: Union[str, List[str], List[List[dict]]],
         targets: List[str],
+        log_file: Path | str = None,
     ) -> BatchGCGResult:
         """Run batch GCG optimization for multiple targets.
         
@@ -366,6 +378,8 @@ class BatchGCG:
 
         n_targets = len(targets)
         self.stop_flags = [False] * n_targets
+        batch_intermediate_results = [SampleIntermediateResult(query=query[0]["content"].split("[optim_str]")[0]
+                                                               , all_strings_to_losses={}) for query in messages]
 
         # Handle messages input
         if isinstance(messages, str) or (isinstance(messages, list) and isinstance(messages[0], dict)):
@@ -489,6 +503,13 @@ class BatchGCG:
                 # Update buffer
                 for i, loss in enumerate(current_losses):
                     all_losses[i].append(loss)
+                    batch_intermediate_results[i].all_strings_to_losses.update({
+                        tokenizer.batch_decode(optim_ids)[0]: loss
+                    })
+                    if log_file is not None:
+                        with open(log_file, "w") as f:
+                            f.write(json.dumps(asdict(batch_intermediate_results[i]))+"\n")
+
                     
                 if buffer.size == 0 or sum(current_losses)/len(current_losses) < sum(buffer.get_highest_losses())/len(buffer.get_highest_losses()):
                     buffer.add(current_losses, optim_ids)
@@ -517,6 +538,7 @@ class BatchGCG:
             best_strings=best_strings,
             all_losses=all_losses,
             all_strings=all_optim_strings,
+            intermediate_results=batch_intermediate_results,
         )
 
         return result
@@ -708,6 +730,7 @@ def run_batch(
     messages: Union[str, List[str], List[List[dict]]],
     targets: List[str],
     config: Optional[GCGConfig] = None,
+    log_file: Path | str = None,
 ) -> BatchGCGResult:
     """Generates optimized strings for multiple targets using batch GCG.
     
@@ -727,7 +750,7 @@ def run_batch(
     logger.setLevel(getattr(logging, config.verbosity))
 
     batch_gcg = BatchGCG(model, tokenizer, config)
-    result = batch_gcg.run(messages, targets)
+    result = batch_gcg.run(messages, targets, log_file)
     return result
 
 
