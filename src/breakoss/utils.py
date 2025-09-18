@@ -13,8 +13,8 @@ import torch
 
 def get_exp_dir(
     log_base: Path | str = None,
-    model: LLMHF = None,
-    method: BaseMethod = None,
+    model: LLMHF | str = None,
+    method: BaseMethod | str = None,
     evaluator: Evaluator = None,
     seed: int = 42,
     dataset_name: str = None,
@@ -24,15 +24,21 @@ def get_exp_dir(
     if log_base is None:
         log_base = os.path.join(os.path.dirname(__file__), "../../breakoss_logs")
     datetime_stamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    if isinstance(method, str):
+        method_name = method
+    elif method is None:
+        method_name = "direct"
+    else:
+        method_name = method.name()
     log_dir = os.path.join(
         log_base,
-        model.model_name.replace("/", "_"),
+        model if isinstance(model, str) else model.model_name.replace("/", "_"),
         (
             f"{dataset_name}_[{starting_index}_{end_index}]"
             if dataset_name
             else "user_custom_data"
         ),
-        method.name() if method else "direct",
+        method_name,
         evaluator.name() if evaluator else "pure_inference_no_eval",
         f"seed_{seed}",
         datetime_stamp,
