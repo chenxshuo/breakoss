@@ -88,6 +88,7 @@ def openrouter():
 
     # print(response.json()["choices"][0]["text"])
     print(response_completions.json())
+    import ipdb; ipdb.set_trace()
     print(response_chat.json())
 
 
@@ -136,22 +137,22 @@ Let's do it."""
     #     presence_penalty=1.4,
     # )
     # print(completion.choices[0])
-
-def claude():
-    "https://docs.anthropic.com/en/docs/get-started#python"
-    import anthropic
-    client = anthropic.Anthropic()
-    message = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=1000,
-        messages=[
-            {
-                "role": "user",
-                "content": "What should I search for to find the latest developments in renewable energy?"
-            }
-        ]
-    )
-    print(message.content)
+#
+# def claude():
+#     "https://docs.anthropic.com/en/docs/get-started#python"
+#     import anthropic
+#     client = anthropic.Anthropic()
+#     message = client.messages.create(
+#         model="claude-sonnet-4-20250514",
+#         max_tokens=1000,
+#         messages=[
+#             {
+#                 "role": "user",
+#                 "content": "What should I search for to find the latest developments in renewable energy?"
+#             }
+#         ]
+#     )
+#     print(message.content)
 
 if __name__ == "__main__":
     fire.Fire()
