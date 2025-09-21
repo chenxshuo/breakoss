@@ -1,9 +1,9 @@
 
-#CUDA_VISIBLE_DEVICES=0 python examples/1_cot_bypass.py main_inference \
-#  --dataset_name=StrongReject \
-#  --model_name=openai/gpt-oss-20b:free \
-#  --provider=openrouter
-#
+CUDA_VISIBLE_DEVICES=0 python examples/1_cot_bypass.py main_inference \
+  --dataset_name=StrongReject \
+  --model_name=openai/gpt-oss-20b:free \
+  --provider=openrouter
+
 
 # gpt-oss-20b
 #pids=()
