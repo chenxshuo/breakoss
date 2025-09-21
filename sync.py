@@ -17,13 +17,14 @@ def run_job():
                 repo_id="ShuoChen99/breakoss",
                 repo_type="dataset",
                 ignore_patterns=[".git/*", ".idea/*", "*.pyc", "__pycache__/*", ".DS_Store", ".venv/*",
-                                 "sync.py", ".env"],
+                                 "sync.py", ".env", "*.swp"],
             )
             api.upload_folder(
                 folder_path="logs_bash",
                 path_in_repo="logs_bash",
                 repo_id="ShuoChen99/breakoss",
                 repo_type="dataset",
+                ignore_patterns=["*.swp"],
             )
         except Exception as e:
             logger.error(f"Error during upload: {e}")
