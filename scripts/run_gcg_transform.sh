@@ -83,13 +83,13 @@ CUDA_VISIBLE_DEVICES=3 nohup python examples/3_gcg.py transform \
 
 
 # wait
-CUDA_VISIBLE_DEVICES=0 nohup python examples/3_gcg.py transform \
+CUDA_VISIBLE_DEVICES=1 nohup python examples/3_gcg.py transform \
   --dataset_name=CatQA \
   --target_model_name=openai/gpt-oss-20b \
   --start_ind=400 --end_ind=450 > logs_bash/gcg_optimization_transform_CatQA_gpt-oss-20b_start_400_end_450.log 2>&1 &
 
 
-CUDA_VISIBLE_DEVICES=1 nohup python examples/3_gcg.py transform \
+CUDA_VISIBLE_DEVICES=0 nohup python examples/3_gcg.py transform \
   --dataset_name=CatQA \
   --target_model_name=openai/gpt-oss-20b \
   --start_ind=450 --end_ind=500 > logs_bash/gcg_optimization_transform_CatQA_gpt-oss-20b_start_450_end_500.log 2>&1 &
