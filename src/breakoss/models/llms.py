@@ -18,6 +18,7 @@ class InferenceConfig(BaseModel):
     top_p: float = 0.9
     repetition_penalty: float = 1.0
     do_sample: bool = True
+    reasoning_effort: Literal["low", "medium", "high"] = "medium"
 
 
 class LLMHF:
@@ -43,7 +44,7 @@ class LLMHF:
         self.tokenizer.padding_side = "left"
 
 
-    def chat(self, *, prompt: str, inference_config: InferenceConfig, system_prompt: str = None, apply_chat_template: bool = True) -> str:
+    def chat(self, *, prompt: str, inference_config: InferenceConfig, apply_chat_template: bool = True) -> str:
         """Generate a chat response using the loaded model.
 
         Args:
@@ -60,6 +61,7 @@ class LLMHF:
                 add_generation_prompt=True,
                 return_tensors="pt",
                 return_dict=True,
+                reasoning_effort=inference_config.reasoning_effort
             ).to(self.model.device)
         else:
             inputs = self.tokenizer(
