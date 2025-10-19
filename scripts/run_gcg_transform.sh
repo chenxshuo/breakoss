@@ -169,3 +169,27 @@ CUDA_VISIBLE_DEVICES=1 nohup python examples/3_gcg.py transform \
   --dataset_name=JBBHarmfulBehaviors \
   --target_model_name=openai/gpt-oss-20b \
   --start_ind=50 --end_ind=101 > logs_bash/gcg_optimization_transform_JBBHarmfulBehaviors_gpt-oss-20b_start_50_end_101.log 2>&1 &
+
+
+
+# JBB Qwen3-4B
+
+CUDA_VISIBLE_DEVICES=0 python examples/3_gcg.py transform \
+  --dataset_name=JBBHarmfulBehaviors \
+  --target_model_name=Qwen/Qwen3-4B-Thinking-2507 \
+  --draft_model_name=Qwen/Qwen3-4B-Thinking-2507 \
+  --num_steps=1200 --search_width=512 --gcg_batch_size=256 \
+  --start_ind=0 --end_ind=50
+
+CUDA_VISIBLE_DEVICES=0 python examples/3_gcg.py transform \
+  --dataset_name=JBBHarmfulBehaviors \
+  --target_model_name=deepseek-ai/DeepSeek-R1-Distill-Llama-8B \
+  --draft_model_name=deepseek-ai/DeepSeek-R1-Distill-Llama-8B \
+  --num_steps=1200 --search_width=512 --gcg_batch_size=256 \
+  --start_ind=0 --end_ind=50
+
+CUDA_VISIBLE_DEVICES=0 nohup python examples/3_gcg.py transform \
+  --dataset_name=JBBHarmfulBehaviors \
+  --target_model_name=Qwen/Qwen3-4B-Thinking-2507 \
+  --draft_model_name=Qwen/Qwen3-4B-Thinking-2507 \
+  --start_ind=0 --end_ind=50 > logs_bash/gcg_optimization_transform_JBBHarmfulBehaviors_qwen3-4b-thinking-2507_start_0_end_50.log 2>&1 &
