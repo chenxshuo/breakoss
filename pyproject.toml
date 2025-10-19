@@ -67,6 +67,7 @@ dependencies = [
     "peft>=0.17.1",
     "vllm>=0.7.3",
     "setuptools>=80.9.0",
+    "matplotlib>=3.10.6",
 ]
 
 # see https://peps.python.org/pep-0735/ and https://docs.astral.sh/uv/concepts/dependencies/#dependency-groups
