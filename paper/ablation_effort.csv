@@ -1,0 +1,5 @@
+Reasoning Effort	CoT Bypass	CoT Bypass	Fake OverRefusal	Fake OverRefusal	Reasoning Hijack	Reasoning Hijack
+Reasoning Effort	ASR	Harm	ASR	Harm	ASR	Harm
+Low	66.75	51.27	90	52.31	91.5	67.65
+Medium	66.5	50.03	89	50.02	91.25	68.1
+High	66.75	51.27	89.5	52.43	91.5	69.2
