@@ -48,6 +48,9 @@ def main_inference(
     end_index: int = -1,
     batch_size: int = 4,
     seed: int = 42,
+    temperature: float = 0.0,
+    do_sample=False,
+    reasoning_effort: Literal["low", "medium", "high"] = "medium",
     failure_cases_dir: pathlib.Path | str = None,
     apply_chat_template: bool = True,
     provider: Literal['hf', 'openrouter'] = "hf",
@@ -61,10 +64,11 @@ def main_inference(
     cot_bypass = CoTBypass(target_model_name=model_name)
     inference_config = InferenceConfig(
         max_new_tokens=1000,
-        temperature=0.0,
+        temperature=temperature,
         top_p=0.9,
         repetition_penalty=1.3,
-        do_sample=False,
+        reasoning_effort=reasoning_effort,
+        do_sample=do_sample,
     )
     logger.info(f"Loading transformed dataset {dataset_name} for FakeOverrefusal method.")
     base_dir = os.path.join(os.path.dirname(__file__), "../transformed_datasets")

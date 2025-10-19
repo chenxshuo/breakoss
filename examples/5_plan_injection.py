@@ -558,6 +558,9 @@ def main_inference(
     end_index: int = -1,
     batch_size: int = 4,
     seed: int = 42,
+    temperature: float = 0.0,
+    do_sample=False,
+    reasoning_effort: Literal["low", "medium", "high"] = "medium",
     apply_chat_template: bool = True,
     provider: Literal['hf', 'openrouter'] = "hf",
 ):
@@ -569,10 +572,11 @@ def main_inference(
     judge = None
     inference_config = InferenceConfig(
         max_new_tokens=1000,
-        temperature=0.0,
+        temperature=temperature,
         top_p=0.9,
         repetition_penalty=1.3,
-        do_sample=False,
+        do_sample=do_sample,
+        reasoning_effort=reasoning_effort,
     )
 
     logger.info(f"Loading transformed dataset {dataset_name} for PlanInjection method.")
