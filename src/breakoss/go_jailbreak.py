@@ -272,6 +272,7 @@ def go_evaluate(
     records_path: str,
     log_base: Path | str = None,
     extract_failure_cases: bool = False,
+    evalualte_on_final_response: bool = False,
 ) -> ExperimentFullRecords:
     """Re-evaluate existing experiment records with a different evaluator.
 
@@ -322,6 +323,13 @@ def go_evaluate(
         else:
             harmful_prompt = record.datasample.harmful_prompt
         response = record.evaluate_result.response
+        if evalualte_on_final_response:
+            for special_token in ["<|dummy_85|>","<\uff5cend\u2581of\u2581sentence\uff5c>"]:
+                response = response.replace(special_token, "")
+            if "</think>" in response:
+                response = response.split("</think>")[-1]
+            else:
+                response = "Sorry, I cannot help with it. No final response found."
         result = evaluator.evaluate_one(
             harmful_prompt=harmful_prompt, response=response
         )
