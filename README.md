@@ -116,3 +116,17 @@ python examples/5_plan_injection.py one_example
 ### ⚖️ License
 
 The code in this package is licensed under the MIT License.
+
+
+## Citation
+
+If you use this framework in your research, please cite:
+
+```bibtex
+@article{chen2025bag,
+  title={Bag of Tricks for Subverting Reasoning-based Safety Guardrails},
+  author={Chen, Shuo and Han, Zhen and Chen, Haokun and He, Bailan and Si, Shengyun and Wu, Jingpei and Torr, Philip and Tresp, Volker and Gu, Jindong},
+  journal={arXiv preprint arXiv:2510.11570},
+  year={2025}
+}
+```
