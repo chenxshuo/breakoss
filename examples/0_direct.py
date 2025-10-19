@@ -68,6 +68,7 @@ def main_evals(
         evaluator=refusal_words_evaluator,
         records_path=json_path,
         extract_failure_cases=True,
+        evalualte_on_final_response=True
     )
 
     llama_guard_evaluator = LlamaGuardEvaluator()
@@ -75,6 +76,7 @@ def main_evals(
         evaluator=llama_guard_evaluator,
         records_path=json_path,
         extract_failure_cases=True,
+        evalualte_on_final_response=True
     )
     free_gpu_memory(llama_guard_evaluator)
 
@@ -83,6 +85,7 @@ def main_evals(
         evaluator=strong_reject_evaluator,
         records_path=json_path,
         extract_failure_cases=True,
+        evalualte_on_final_response=True
     )
     free_gpu_memory(strong_reject_evaluator)
 
@@ -92,6 +95,7 @@ def main_evals(
         evaluator=harm_bench_evaluator,
         records_path=json_path,
         extract_failure_cases=True,
+        evalualte_on_final_response=True
     )
     free_gpu_memory(harm_bench_evaluator)
 
