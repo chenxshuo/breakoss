@@ -150,11 +150,17 @@ def reevaluate():
 
 def main_inference(
     dataset_name: Literal["HarmfulBehaviors", "StrongReject", "HarmBench", "CatQA", "JBBHarmfulBehaviors"] = "HarmfulBehaviors",
+    dataset_path: str | None = None,
     model_name: Literal[SUPPORTED_MODELS] = "openai/gpt-oss-20b",
     starting_index: int = 0,
     end_index: int = -1,
     batch_size: int = 4,
     seed: int = 42,
+    temperature: float = 0.0,
+    do_sample=False,
+    repeat_user_prompt: bool=True,
+    ablation_transform_type: None | Literal[0,1,2,3,4,5,-1,-2,-3,-4,5] = None,
+    reasoning_effort: Literal["low", "medium", "high"] = "medium",
     apply_chat_template: bool = True,
     provider: Literal['hf', 'openrouter'] = "hf",
 ):
@@ -162,25 +168,26 @@ def main_inference(
     assert model_name in SUPPORTED_MODELS, f"Model {model_name} is not supported. Supported models are: {SUPPORTED_MODELS}"
     model = load_llm(model_name=model_name, cuda_device="auto", provider=provider)
     judge = None
-    cot_bypass = CoTBypass(target_model_name=model_name)
+    cot_bypass = CoTBypass(target_model_name=model_name, ablation_transform_type=ablation_transform_type, repeat_user_prompt=repeat_user_prompt)
     inference_config = InferenceConfig(
         max_new_tokens=1000,
-        temperature=0.0,
+        temperature=temperature,
         top_p=0.9,
         repetition_penalty=1.3,
-        do_sample=False,
+        do_sample=do_sample,
+        reasoning_effort=reasoning_effort,
     )
 
     if dataset_name == "StrongReject":
-        dataset = StrongReject()
+        dataset = StrongReject(dataset_path)
     elif dataset_name == "HarmfulBehaviors":
-        dataset = HarmfulBehaviors()
+        dataset = HarmfulBehaviors(dataset_path)
     elif dataset_name == "HarmBench":
-        dataset = HarmBench()
+        dataset = HarmBench(dataset_path)
     elif dataset_name == "CatQA":
-        dataset = CatQA()
+        dataset = CatQA(dataset_path)
     elif dataset_name == "JBBHarmfulBehaviors":
-        dataset = JBBHarmfulBehaviors()
+        dataset = JBBHarmfulBehaviors(dataset_path)
     else:
         raise ValueError(f"Unknown dataset name: {dataset_name}")
 
